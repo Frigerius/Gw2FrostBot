@@ -41,7 +41,7 @@ public class ListMembersCommand extends BaseGuildCommand
 	}
 
 	@Override
-	public String getFormatExtension()
+	public String getArguments()
 	{
 		return "";
 	}

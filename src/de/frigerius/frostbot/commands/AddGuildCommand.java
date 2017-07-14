@@ -35,7 +35,7 @@ public class AddGuildCommand extends BaseGuildCommand
 	}
 
 	@Override
-	public String getFormatExtension()
+	public String getArguments()
 	{
 		return "[API-Key] [GuildName]";
 	}

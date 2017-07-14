@@ -17,14 +17,16 @@ public class AfkMover extends ClientService
 	private final Logger LOGGER = LoggerFactory.getLogger(AfkMover.class);
 	private final ConcurrentHashMap<Integer, MyClient> _afkUsers;
 	private final ReentrantLock _lock;
-	private final HashSet<Integer> spectateChannelForAfks = new HashSet<>();
+	private final HashSet<Integer> _spectateChannelForAfks = new HashSet<>();
 	private FrostBot _bot;
+	private ClientController _clientController;
 
 	public AfkMover()
 	{
 		_bot = FrostBot.getInstance();
 		_lock = new ReentrantLock();
 		_afkUsers = new ConcurrentHashMap<>();
+		_clientController = _bot.getClientController();
 	}
 
 	@Override
@@ -44,7 +46,7 @@ public class AfkMover extends ClientService
 
 	}
 
-	protected void handleAfk(Client c)
+	protected void handleAfk(final Client c)
 	{
 		int channelId = c.getChannelId();
 		if (isClientAFK(c))
@@ -52,7 +54,7 @@ public class AfkMover extends ClientService
 			_lock.lock();
 			try
 			{
-				if (spectateChannelForAfks.contains(channelId))
+				if (_spectateChannelForAfks.contains(channelId))
 				{
 					if (MyClient.isInServerGroup(c.getServerGroups(), BotSettings.afkIgnoreServerGroups))
 					{
@@ -62,9 +64,14 @@ public class AfkMover extends ClientService
 					MyClient client = new MyClient(c);
 					if (client.getLastChannelId() != BotSettings.afkChannelIDLong)
 					{
-						_bot.TS3API.moveClient(client.getId(), BotSettings.afkChannelIDLong);
-						_bot.TS3API.sendPrivateMessage(client.getId(), "Du wurdest in einen AFk-Channel gezogen.");
+						MyClient sup = _clientController.getActiveSupporter();
+						if (sup != null && sup.getId() == client.getId())
+						{
+							_clientController.setActiveSupporter(null);
+						}
 						_afkUsers.put(client.getId(), client);
+						_bot.TS3API.moveClient(client.getId(), BotSettings.afkChannelIDLong).onFailure(a -> _afkUsers.remove(c.getId()));
+						_bot.TS3API.sendPrivateMessage(client.getId(), "Du wurdest in einen AFk-Channel gezogen.");
 					}
 					LOGGER.info(c.getNickname() + " is afk.");
 				}
@@ -111,20 +118,21 @@ public class AfkMover extends ClientService
 
 	public void refreshAFKChannelList()
 	{
-		spectateChannelForAfks.clear();
+		_spectateChannelForAfks.clear();
+		_spectateChannelForAfks.add(BotSettings.supporterChannelID);
 		_bot.TS3API.getChannels().onSuccess(channels -> {
 			_lock.lock();
 			try
 			{
 				for (int i : BotSettings.afkSpectateChannelIDs)
 				{
-					spectateChannelForAfks.add(i);
+					_spectateChannelForAfks.add(i);
 				}
 				for (Channel channel : channels)
 				{
 					int PID = channel.getParentChannelId();
-					if (spectateChannelForAfks.contains(PID))
-						spectateChannelForAfks.add(channel.getId());
+					if (_spectateChannelForAfks.contains(PID))
+						_spectateChannelForAfks.add(channel.getId());
 				}
 			} finally
 			{
@@ -138,9 +146,9 @@ public class AfkMover extends ClientService
 		_lock.lock();
 		try
 		{
-			if (spectateChannelForAfks.contains(parentId))
+			if (_spectateChannelForAfks.contains(parentId))
 			{
-				spectateChannelForAfks.add(channelId);
+				_spectateChannelForAfks.add(channelId);
 			}
 		} finally
 		{
@@ -153,7 +161,7 @@ public class AfkMover extends ClientService
 		_lock.lock();
 		try
 		{
-			spectateChannelForAfks.add(channelId);
+			_spectateChannelForAfks.add(channelId);
 		} finally
 		{
 			_lock.unlock();
@@ -165,7 +173,7 @@ public class AfkMover extends ClientService
 		_lock.lock();
 		try
 		{
-			spectateChannelForAfks.remove(channelid);
+			_spectateChannelForAfks.remove(channelid);
 		} finally
 		{
 			_lock.unlock();
@@ -177,12 +185,12 @@ public class AfkMover extends ClientService
 		_lock.lock();
 		try
 		{
-			if (spectateChannelForAfks.contains(parentId))
+			if (_spectateChannelForAfks.contains(parentId))
 			{
-				spectateChannelForAfks.add(channelId);
+				_spectateChannelForAfks.add(channelId);
 			} else
 			{
-				spectateChannelForAfks.remove(channelId);
+				_spectateChannelForAfks.remove(channelId);
 			}
 		} finally
 		{
@@ -207,5 +215,10 @@ public class AfkMover extends ClientService
 	public MyClient getClient(int id)
 	{
 		return _afkUsers.get(id);
+	}
+
+	public boolean isClientAfk(int id)
+	{
+		return _afkUsers.contains(id);
 	}
 }

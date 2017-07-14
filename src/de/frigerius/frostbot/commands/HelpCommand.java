@@ -54,7 +54,7 @@ public class HelpCommand extends BaseCommand
 	}
 
 	@Override
-	public String getFormatExtension()
+	public String getArguments()
 	{
 		return "[(Befehlsname)]";
 	}

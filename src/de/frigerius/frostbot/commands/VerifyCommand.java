@@ -31,7 +31,7 @@ public class VerifyCommand extends RequestingBaseCommand
 	protected CommandResult handleIntern(Client client, String[] args)
 	{
 		String uid = client.getUniqueIdentifier();
-		if (AddRequestor(uid))
+		if (AddRequester(uid))
 		{
 			try
 			{
@@ -40,7 +40,7 @@ public class VerifyCommand extends RequestingBaseCommand
 					_bot.TS3API.sendPrivateMessage(client.getId(), ColoredText.green("Du bist bereits verifiziert."));
 				} else
 				{
-					MyClient myClient = _clientController.findHelpRequestor(client.getId());
+					MyClient myClient = _clientController.findHelpRequester(client.getId());
 					if (myClient != null)
 					{
 						if (myClient.getRequestionState() == RequestionState.ManualVerificationRequested && args.length != 1)
@@ -55,7 +55,7 @@ public class VerifyCommand extends RequestingBaseCommand
 									ColoredText.red("Du hast bereits eine Anfrage eingereicht, bitte gedulde dich, bis dir jemand zur Hilfe kommt."));
 							return CommandResult.NoErrors;
 						}
-						_clientController.removeHelpRequestor(client.getId());
+						_clientController.removeHelpRequester(client.getId());
 					}
 					if (args.length == 0)
 					{
@@ -72,7 +72,7 @@ public class VerifyCommand extends RequestingBaseCommand
 				}
 			} finally
 			{
-				RemoveRequestor(uid);
+				RemoveRequester(uid);
 			}
 		} else
 		{
@@ -97,14 +97,13 @@ public class VerifyCommand extends RequestingBaseCommand
 			{
 				_bot.TS3API.sendPrivateMessage(client.getId(),
 						ColoredText.red("Leider ist bei der automatisierten Verifizierung ein Fehler aufgetreten, ich werde nun ein Ticket für dich erstellen."));
-				msg = ColoredText.green(client.getNickname() + " benötigt Hilfe bei der Verifizierung. Antworte mir mit !helpverify, wenn du helfen möchtest.");
+				msg = ColoredText.green(client.getNickname() + " benötigt Hilfe bei der Verifizierung.%s");
 			}
 			if (returnCode == 2)
 			{
 				_bot.TS3API.sendPrivateMessage(client.getId(),
 						ColoredText.red("Du hast dich zu oft mit dem selben Account angemeldet. Ich werde nun ein Ticket für dich erstellen."));
-				msg = ColoredText.green(client.getNickname()
-						+ " hat sich zu oft mit dem selben Account angemeldet und benötigt jetzt deine Hilfe. Antworte mir mit !helpverify, wenn du helfen möchtest.");
+				msg = ColoredText.green(client.getNickname() + " hat sich zu oft mit dem selben Account angemeldet und benötigt jetzt deine Hilfe.%s");
 			}
 			sendMsgToSupporter(client, msg, RequestionState.AutomatedVerificationFailed);
 		}
@@ -113,26 +112,41 @@ public class VerifyCommand extends RequestingBaseCommand
 
 	private void handleDirectCall(Client client)
 	{
-		String msg = ColoredText.green(client.getNickname() + " möchte verifiziert werden. Antworte mir mit !helpverify, wenn du helfen möchtest.");
+		String msg = ColoredText.green(client.getNickname() + " möchte verifiziert werden.%s");
 		sendMsgToSupporter(client, msg, RequestionState.ManualVerificationRequested);
 	}
 
 	private void sendMsgToSupporter(Client client, String msg, RequestionState state)
 	{
-		Collection<MyClient> supporter = _clientController.getSupporter();
-		for (MyClient c : supporter)
+		MyClient sup = _clientController.getActiveSupporter();
+		if (sup == null)
 		{
-			_bot.TS3API.sendPrivateMessage(c.getId(), msg);
-			_bot.TS3API.pokeClient(c.getId(), "Jemand benötigt Hilfe bei der Verifizierung.");
-		}
-		if (supporter.size() == 0)
-		{
-			_bot.TS3API.sendPrivateMessage(client.getId(), ColoredText.red("Momentan steht kein Verifizierer zur Verfügung. Ich melde mich bei dir, sobald sich dies ändert."));
+			Collection<MyClient> supporter = _clientController.getSupporter();
+			for (MyClient c : supporter)
+			{
+				_bot.TS3API.sendPrivateMessage(c.getId(), String.format(msg, " Antworte mir mit !helpverify, wenn du helfen möchtest."));
+				_bot.TS3API.pokeClient(c.getId(), "Jemand benötigt Hilfe bei der Verifizierung.");
+			}
+			if (supporter.size() == 0)
+			{
+				_bot.TS3API.sendPrivateMessage(client.getId(), ColoredText.red("Momentan steht kein Verifizierer zur Verfügung. Ich melde mich bei dir, sobald sich dies ändert."));
+			} else
+			{
+				_bot.TS3API.sendPrivateMessage(client.getId(), ColoredText.green("Ich habe deine Anfrage eingereicht."));
+			}
+			_clientController.addHelpRequester(new MyClient(client, state));
 		} else
 		{
-			_bot.TS3API.sendPrivateMessage(client.getId(), ColoredText.green("Ich habe deine Anfrage eingereicht."));
+			try
+			{
+				_bot.TS3API.sendPrivateMessage(sup.getId(), String.format(msg, ""));
+				_bot.TS3API.sendPrivateMessage(client.getId(), ColoredText.green(String.format("%s wird sich nun um dein Anliegen kümmern.", sup.getName())));
+				_bot.TS3API.moveClient(client.getId(), BotSettings.supporterChannelID);
+			} catch (Exception ex)
+			{
+				LOGGER.error("Error in moving client.", ex);
+			}
 		}
-		_clientController.addHelpRequestor(new MyClient(client, state));
 	}
 
 	@Override
@@ -142,7 +156,7 @@ public class VerifyCommand extends RequestingBaseCommand
 	}
 
 	@Override
-	public String getFormatExtension()
+	public String getArguments()
 	{
 		return "[(API-Key)]";
 	}

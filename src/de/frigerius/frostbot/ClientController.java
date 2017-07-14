@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +20,8 @@ public class ClientController
 	private final ConcurrentHashMap<Integer, MyClient> _supporter = new ConcurrentHashMap<>();
 	private final ConcurrentHashMap<Integer, MyClient> _needsSupport = new ConcurrentHashMap<>();
 	private final ConcurrentHashMap<Integer, MyClient> _afkCmdMap = new ConcurrentHashMap<>();
+	private MyClient _activeSupporter = null;
+	private ReentrantLock _activeSupLock = new ReentrantLock();
 
 	public ClientController()
 	{
@@ -71,6 +74,15 @@ public class ClientController
 			afkMover.removeClient(id);
 		_supporter.remove(id);
 		_afkCmdMap.remove(id);
+		_activeSupLock.lock();
+		try
+		{
+			if (_activeSupporter.getId() == id)
+				_activeSupporter = null;
+		} finally
+		{
+			_activeSupLock.unlock();
+		}
 	}
 
 	private String makeVerifyMessage()
@@ -191,19 +203,48 @@ public class ClientController
 		return _supporter.values();
 	}
 
-	public MyClient findHelpRequestor(int id)
+	public MyClient findHelpRequester(int id)
 	{
 		return _needsSupport.get(id);
 	}
 
-	public void removeHelpRequestor(int id)
+	public void removeHelpRequester(int id)
 	{
 		_needsSupport.remove(id);
 	}
 
-	public void addHelpRequestor(MyClient client)
+	public void addHelpRequester(MyClient client)
 	{
 		_needsSupport.put(client.getId(), client);
+	}
+
+	public MyClient getActiveSupporter()
+	{
+		_activeSupLock.lock();
+		try
+		{
+			return _activeSupporter;
+		} finally
+		{
+			_activeSupLock.unlock();
+		}
+	}
+
+	public void setActiveSupporter(MyClient client)
+	{
+		_activeSupLock.lock();
+		try
+		{
+			_activeSupporter = client;
+		} finally
+		{
+			_activeSupLock.unlock();
+		}
+	}
+
+	public MyClient getSupporter(int id)
+	{
+		return _supporter.get(id);
 	}
 
 }

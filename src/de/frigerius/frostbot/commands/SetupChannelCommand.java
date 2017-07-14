@@ -22,7 +22,7 @@ public class SetupChannelCommand extends BaseCommand
 	}
 
 	@Override
-	public String getFormatExtension()
+	public String getArguments()
 	{
 		return "";
 	}

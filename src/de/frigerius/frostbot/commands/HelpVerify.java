@@ -1,5 +1,7 @@
 package de.frigerius.frostbot.commands;
 
+import java.util.concurrent.locks.ReentrantLock;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,6 +16,7 @@ public class HelpVerify extends BaseCommand
 {
 	private final Logger LOGGER = LoggerFactory.getLogger(HelpVerify.class);
 	private ClientController _clientController;
+	private ReentrantLock _lock = new ReentrantLock();
 
 	public HelpVerify(int cmdPwr)
 	{
@@ -24,41 +27,58 @@ public class HelpVerify extends BaseCommand
 	@Override
 	protected CommandResult handleIntern(Client client, String[] args)
 	{
-		if (_clientController.isSupportNeeded())
+		_lock.lock();
+		try
 		{
-			if (client.getChannelId() != BotSettings.supporterChannelID)
+			if (_clientController.isSupportNeeded())
 			{
-				try
+				_clientController.setActiveSupporter(_clientController.getSupporter(client.getId()));
+				if (client.getChannelId() != BotSettings.supporterChannelID)
 				{
-					_bot.TS3API.sendPrivateMessage(client.getId(), ColoredText.green("Ich werde dich nun in den Support-Channel ziehen."));
-					_bot.TS3API.moveClient(client.getId(), BotSettings.supporterChannelID);
-				} catch (Exception ex)
+					try
+					{
+						_bot.TS3API.moveClient(client.getId(), BotSettings.supporterChannelID);
+						// _bot.TS3API.sendPrivateMessage(client.getId(), ColoredText.green("Ich werde dich nun in den Support-Channel ziehen."));
+					} catch (Exception ex)
+					{
+						LOGGER.error("Error in moving Supporter", ex);
+						_clientController.setActiveSupporter(null);
+						return CommandResult.Error;
+					}
+				}
+				// notify and move requester.
+				for (MyClient c : _clientController.getHelpRequests())
 				{
-					LOGGER.error("Error in moving Supporter", ex);
+					try
+					{
+						_bot.TS3API.sendPrivateMessage(c.getId(), ColoredText.green("Ein Verifizierer steht nun zu deiner Verfügung, ich bringe dich nun in den Support-Channel."));
+						_bot.TS3API.moveClient(c.getId(), BotSettings.supporterChannelID);
+					} catch (Exception ex)
+					{
+						LOGGER.error("Error in moving \"Needs Help\"", ex);
+					}
+				}
+				_clientController.clearHelpRequests();
+			} else
+			{
+				MyClient sup = _clientController.getActiveSupporter();
+				if (sup == null)
+				{
+					_bot.TS3API.sendPrivateMessage(client.getId(), "Momentan muss niemand verifiziert werden, ich wünsche dir weiterhin einen schönen Tag :)");
+				} else
+				{
+					_bot.TS3API.sendPrivateMessage(client.getId(), String.format("%s bearbeitet derzeitige Anfragen.", sup.getName()));
 				}
 			}
-
-			for (MyClient c : _clientController.getHelpRequests())
-			{
-				try
-				{
-					_bot.TS3API.sendPrivateMessage(c.getId(), ColoredText.green("Ein Verifizierer steht nun zu deiner Verfügung, ich bringe dich nun in den Support-Channel."));
-					_bot.TS3API.moveClient(c.getId(), BotSettings.supporterChannelID);
-				} catch (Exception ex)
-				{
-					LOGGER.error("Error in moving \"Needs Help\"", ex);
-				}
-			}
-			_clientController.clearHelpRequests();
-		} else
+		} finally
 		{
-			_bot.TS3API.sendPrivateMessage(client.getId(), "Momentan muss niemand verifiziert werden, ich wünsche dir weiterhin einen schönen Tag :)");
+			_lock.unlock();
 		}
 		return CommandResult.NoErrors;
 	}
 
 	@Override
-	public String getFormatExtension()
+	public String getArguments()
 	{
 		return "";
 	}
@@ -72,7 +92,7 @@ public class HelpVerify extends BaseCommand
 	@Override
 	protected String getDetails()
 	{
-		return "";
+		return "Es wird zusätzlich eine Session gestartet, in welcher dich jede weitere Anfrage erreicht, bis du den Verifizierungs-Channel verlässt.";
 	}
 
 }

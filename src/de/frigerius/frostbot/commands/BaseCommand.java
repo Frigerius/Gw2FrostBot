@@ -6,6 +6,10 @@ import de.frigerius.frostbot.ColoredText;
 import de.frigerius.frostbot.FrostBot;
 import de.frigerius.frostbot.MyClient;
 
+/**
+ * Basic class for commands.
+ * @author Vinzenz
+ */
 public abstract class BaseCommand
 {
 	private final String _command;
@@ -19,13 +23,44 @@ public abstract class BaseCommand
 		_bot = FrostBot.getInstance();
 	}
 
+	/**
+	 * Command handle return values.
+	 * @author Vinzenz
+	 * 
+	 */
 	public enum CommandResult
 	{
-		NoErrors, Error, InvalidPermissions, ArgumentError
+		/**
+		 * 	Command handled without any errors.
+		 */
+		NoErrors,
+		/**
+		 *  An Error occurred while handling.
+		 */
+		Error,
+		/**
+		 *  User is not having the permission to use the command.
+		 */
+		InvalidPermissions,
+		/**
+		 *  Wrong argument count/format/...
+		 */
+		ArgumentError
 	}
 
+	
+	/**
+	 * Implement your command behavior.
+	 * @param client Requestor
+	 * @param args Command arguments, maybe empty
+	 * @return CommandResult
+	 */
 	protected abstract CommandResult handleIntern(Client client, String[] args);
 
+	
+	/**
+	 * @return Command
+	 */
 	public String getCommand()
 	{
 		return _command;
@@ -33,9 +68,9 @@ public abstract class BaseCommand
 
 	/**
 	 * @param client
-	 *            Client
+	 *            Requestor
 	 * @param args
-	 *            arguments
+	 *            Command arguments, maybe empty
 	 * @return 0 - no errors<br/>
 	 *         1 - error<br/>
 	 *         2 - invalid permission<br/>
@@ -50,32 +85,55 @@ public abstract class BaseCommand
 		return CommandResult.InvalidPermissions;
 	}
 
+	/**
+	 * Checks if the user can use this command.
+	 * @param client Requestor
+	 * @return true if User can use this command, false else.
+	 */
 	public boolean hasClientRights(Client client)
 	{
 		return client == null || MyClient.GetCmdPower(client.getServerGroups()) >= _cmdPwr;
 	}
 
+	/**
+	 * @return Full command with arguments.
+	 */
 	public String getFullCommand()
 	{
 		String com = "!" + _command;
-		if (getFormatExtension() == "")
+		if (getArguments() == "")
 		{
 			return com;
 		}
-		return String.format("%1$s %2$s", com, getFormatExtension());
+		return String.format("%1$s %2$s", com, getArguments());
 	}
 
-	public abstract String getFormatExtension();
+	/**
+	 * @return commands arguments.
+	 */
+	public abstract String getArguments();
 
+	/**
+	 * @return commands description.
+	 */
 	public abstract String getDescription();
 
+	/**
+	 * @return full formated command with description etc.
+	 */
 	public String getDetailedDescription()
 	{
 		return String.format("!%s:\n%s\n%s\n%s", _command, getDescription(), ColoredText.green(getFullCommand()), getDetails());
 	}
-
+	
+	/**
+	 * @return Detailed description.
+	 */
 	protected abstract String getDetails();
 
+	/**
+	 * @return needed power to use this command.
+	 */
 	public int getCmdPwr()
 	{
 		return _cmdPwr;

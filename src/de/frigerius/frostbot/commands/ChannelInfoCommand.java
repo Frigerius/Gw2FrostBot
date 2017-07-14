@@ -57,7 +57,7 @@ public class ChannelInfoCommand extends BaseCommand
 	}
 
 	@Override
-	public String getFormatExtension()
+	public String getArguments()
 	{
 		return "";
 	}

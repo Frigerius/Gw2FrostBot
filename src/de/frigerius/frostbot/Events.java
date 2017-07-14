@@ -23,6 +23,7 @@ public class Events
 	private FrostBot _bot;
 	private AfkMover _afkMover;
 	private ChannelController _channelController;
+	private ClientController _clientController;
 
 	private boolean _init = false;
 
@@ -37,6 +38,7 @@ public class Events
 	{
 		if (_init)
 			return;
+		_clientController = _bot.getClientController();
 		_init = true;
 		LOGGER.info("Initializing Events...");
 		_bot.TS3API.addTS3Listeners(new TS3Listener()
@@ -73,8 +75,8 @@ public class Events
 			{
 				if (e.getInvokerId() != _bot.QueryID)
 				{
-
-					_afkMover.removeClient(e.getClientId());
+					if (_afkMover != null)
+						_afkMover.removeClient(e.getClientId());
 					_bot.getClientController().removeAfk(e.getClientId());
 					if (e.getTargetChannelId() == BotSettings.botChannel)
 					{
@@ -90,6 +92,11 @@ public class Events
 							_bot.TS3API.sendPrivateMessage(e.getClientId(), "Du befindest dich in einem Aufnahme-Channel! Deine Stimme könnte aufgenommen werden!");
 						}
 					});
+					MyClient sup = _clientController.getActiveSupporter();
+					if (sup != null && e.getClientId() == sup.getId())
+					{
+						_clientController.setActiveSupporter(null);
+					}
 				}
 			}
 

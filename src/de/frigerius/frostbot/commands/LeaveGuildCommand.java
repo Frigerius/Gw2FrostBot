@@ -16,14 +16,14 @@ public class LeaveGuildCommand extends RequestingBaseGuildCommand
 	@Override
 	protected CommandResult handleIntern(Client client, String[] args)
 	{
-		if (AddRequestor(client.getUniqueIdentifier()))
+		if (AddRequester(client.getUniqueIdentifier()))
 		{
 			try
 			{
 				_guildManager.LeaveGuild(client);
 			} finally
 			{
-				RemoveRequestor(client.getUniqueIdentifier());
+				RemoveRequester(client.getUniqueIdentifier());
 			}
 
 		}
@@ -37,7 +37,7 @@ public class LeaveGuildCommand extends RequestingBaseGuildCommand
 	}
 
 	@Override
-	public String getFormatExtension()
+	public String getArguments()
 	{
 		return "";
 	}

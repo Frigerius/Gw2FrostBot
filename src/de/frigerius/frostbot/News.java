@@ -8,6 +8,13 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
+/**
+ * Allows storing a files content and refresh it at runtime.
+ * This class is thread safe.
+ * @author Vinzenz
+ *
+ */
 public class News
 {
 	private final Logger LOGGER;
@@ -23,7 +30,12 @@ public class News
 		_fileName = fileName;
 		refresh();
 	}
-
+	
+	
+	/**
+	 * Refreshes stored message by reading the file.
+	 * @return true: refresh success, false: else
+	 */
 	public boolean refresh()
 	{
 		_lock.lock();
@@ -52,13 +64,15 @@ public class News
 		return true;
 	}
 
+	/**
+	 * @return The news message.
+	 */
 	public String getMsg()
 	{
 		_lock.lock();
 		try
 		{
-			String toReturn = _msg.toString();
-			return toReturn;
+			return _msg.toString();
 		} finally
 		{
 			_lock.unlock();

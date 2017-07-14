@@ -18,7 +18,7 @@ public class AddGuildLeaderCommand extends RequestingBaseGuildCommand
 	{
 		if (args.length != 1)
 			return CommandResult.ArgumentError;
-		if (AddRequestor(client.getUniqueIdentifier()))
+		if (AddRequester(client.getUniqueIdentifier()))
 		{
 			try
 			{
@@ -38,7 +38,7 @@ public class AddGuildLeaderCommand extends RequestingBaseGuildCommand
 				return CommandResult.ArgumentError;
 			} finally
 			{
-				RemoveRequestor(client.getUniqueIdentifier());
+				RemoveRequester(client.getUniqueIdentifier());
 			}
 		}
 		return CommandResult.NoErrors;
@@ -51,7 +51,7 @@ public class AddGuildLeaderCommand extends RequestingBaseGuildCommand
 	}
 
 	@Override
-	public String getFormatExtension()
+	public String getArguments()
 	{
 		return "[Mitglied ID]";
 	}

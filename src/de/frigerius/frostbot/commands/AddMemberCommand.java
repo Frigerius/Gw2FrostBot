@@ -51,7 +51,7 @@ public class AddMemberCommand extends BaseGuildCommand
 	}
 
 	@Override
-	public String getFormatExtension()
+	public String getArguments()
 	{
 		return "[TS-User-Name]";
 	}

@@ -18,7 +18,7 @@ public class ListGuildsCommand extends BaseGuildCommand
 	}
 
 	@Override
-	public String getFormatExtension()
+	public String getArguments()
 	{
 		return "";
 	}

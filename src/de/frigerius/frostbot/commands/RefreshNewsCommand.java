@@ -18,7 +18,7 @@ public class RefreshNewsCommand extends BaseCommand
 	}
 
 	@Override
-	public String getFormatExtension()
+	public String getArguments()
 	{
 		return "";
 	}

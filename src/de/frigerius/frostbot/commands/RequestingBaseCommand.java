@@ -3,6 +3,11 @@ package de.frigerius.frostbot.commands;
 import java.util.HashSet;
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * A user can use this command only once at same time.
+ * @author Vinzenz
+ *
+ */
 public abstract class RequestingBaseCommand extends BaseCommand
 {
 
@@ -14,7 +19,11 @@ public abstract class RequestingBaseCommand extends BaseCommand
 		super(command, cmdPwr);
 	}
 
-	protected boolean AddRequestor(String uid)
+	/**
+	 * @param uid Reqeuster-uid
+	 * @return true if added, false else
+	 */
+	protected boolean AddRequester(String uid)
 	{
 		_lock.lock();
 		try
@@ -33,7 +42,11 @@ public abstract class RequestingBaseCommand extends BaseCommand
 		}
 	}
 
-	protected void RemoveRequestor(String uid)
+	/**
+	 * Removes a requester.
+	 * @param uid Requester-uid
+	 */
+	protected void RemoveRequester(String uid)
 	{
 		_lock.lock();
 		try

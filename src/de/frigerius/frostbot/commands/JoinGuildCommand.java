@@ -20,7 +20,7 @@ public class JoinGuildCommand extends RequestingBaseGuildCommand
 			return CommandResult.ArgumentError;
 		try
 		{
-			if (AddRequestor(client.getUniqueIdentifier()))
+			if (AddRequester(client.getUniqueIdentifier()))
 			{
 				int gId = Integer.parseInt(args[0]);
 				String apiKey = args[1];
@@ -36,7 +36,7 @@ public class JoinGuildCommand extends RequestingBaseGuildCommand
 			return CommandResult.ArgumentError;
 		} finally
 		{
-			RemoveRequestor(client.getUniqueIdentifier());
+			RemoveRequester(client.getUniqueIdentifier());
 		}
 
 		return CommandResult.NoErrors;
@@ -49,7 +49,7 @@ public class JoinGuildCommand extends RequestingBaseGuildCommand
 	}
 
 	@Override
-	public String getFormatExtension()
+	public String getArguments()
 	{
 		return "[Gilden ID] [API-Key]";
 	}

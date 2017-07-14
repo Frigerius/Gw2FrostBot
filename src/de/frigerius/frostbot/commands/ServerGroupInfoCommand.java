@@ -26,7 +26,7 @@ public class ServerGroupInfoCommand extends BaseCommand
 	}
 
 	@Override
-	public String getFormatExtension()
+	public String getArguments()
 	{
 		return "";
 	}

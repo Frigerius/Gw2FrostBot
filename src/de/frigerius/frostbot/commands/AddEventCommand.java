@@ -55,7 +55,7 @@ public class AddEventCommand extends BaseCommand
 	}
 
 	@Override
-	public String getFormatExtension()
+	public String getArguments()
 	{
 		return "[Titel] [Dauer in Stunden]";
 	}

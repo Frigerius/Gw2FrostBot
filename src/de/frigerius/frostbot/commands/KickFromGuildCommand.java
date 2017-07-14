@@ -39,7 +39,7 @@ public class KickFromGuildCommand extends BaseGuildCommand
 	}
 
 	@Override
-	public String getFormatExtension()
+	public String getArguments()
 	{
 		return "[Mitglied-ID]";
 	}
