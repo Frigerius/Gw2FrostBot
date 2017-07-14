@@ -122,11 +122,10 @@ public class Commands
 		if (c == null)
 			return;
 		Matcher m = _pattern.matcher(cmd);
-		m.find();
-		String command = m.group("command");
+		String command = extractCommand(m);
 		if (command == null)
 		{
-			LOGGER.warn(String.format("%s: %s (No Command Found!)", cmd, c.getNickname()));
+			LOGGER.warn(String.format("%s: %s (No Command Found!)", c.getNickname(), cmd));
 			_bot.TS3API.sendPrivateMessage(c.getId(), ColoredText.red("Ungültiger Befehl."));
 			return;
 		}
@@ -171,6 +170,14 @@ public class Commands
 			LOGGER.info(String.format("\"Unbekannter Befehl\" will be send to %s.", c.getNickname()));
 			_bot.TS3API.sendPrivateMessage(c.getId(), ColoredText.red("Unbekannter Befehl."));
 		}
+	}
+
+	private String extractCommand(Matcher m)
+	{
+		if (m.find())
+			return m.group("command");
+		else
+			return null;
 	}
 
 	public void handleConsoleCommand(String cmd)
