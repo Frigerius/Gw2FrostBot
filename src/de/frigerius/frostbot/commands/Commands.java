@@ -119,46 +119,43 @@ public class Commands
 
 	public void handleClientCommand(String cmd, Client c)
 	{
+		if (c == null)
+			return;
 		Matcher m = _pattern.matcher(cmd);
 		m.find();
 		String command = m.group("command");
 		if (command == null)
 		{
-			LOGGER.info(String.format("Unbekannter Befehl will be send to %s.", c.getNickname()));
-			_bot.TS3API.sendPrivateMessage(c.getId(), ColoredText.red("Unbekannter Befehl."));
+			LOGGER.warn(String.format("%s: %s (No Command Found!)", cmd, c.getNickname()));
+			_bot.TS3API.sendPrivateMessage(c.getId(), ColoredText.red("Ungültiger Befehl."));
 			return;
 		}
 		String[] args = new String[0];
 		List<String> largs = new ArrayList<String>();
+		StringBuilder sb = new StringBuilder();
 		while (m.find())
 		{
 			if (m.group("param") != null)
+			{
+				sb.append(" \"").append(m.group("param")).append("\"");
 				largs.add(m.group("param"));
-			else
+			} else
+			{
+				sb.append(" \"").append(m.group("param2")).append("\"");
 				largs.add(m.group("param2"));
+			}
 		}
 		args = largs.toArray(new String[largs.size()]);
 		command = command.toLowerCase();
-		String test = command;
-		for (String s : args)
-		{
-			test += " " + s;
-		}
-		LOGGER.info("Interpreted as: " + test);
+
+		LOGGER.info(String.format("%s: %s%s", c.getNickname(), command, sb.toString()));
+
 		BaseCommand baseCommand = null;
-		if (c == null)
+		if (commands.containsKey(command))
 		{
-			if (consoleCommands.containsKey(command))
-			{
-				baseCommand = consoleCommands.get(command);
-			}
-		} else
-		{
-			if (commands.containsKey(command))
-			{
-				baseCommand = commands.get(command);
-			}
+			baseCommand = commands.get(command);
 		}
+
 		if (baseCommand != null)
 		{
 			BaseCommand.CommandResult result = baseCommand.handle(c, args);
@@ -171,7 +168,7 @@ public class Commands
 						ColoredText.red("Dein Befehl hat eine ungültige Signatur. Korrekt wäre: ") + ColoredText.green(baseCommand.getFullCommand()));
 		} else
 		{
-			LOGGER.info(String.format("Unbekannter Befehl will be send to %s.", c.getNickname()));
+			LOGGER.info(String.format("\"Unbekannter Befehl\" will be send to %s.", c.getNickname()));
 			_bot.TS3API.sendPrivateMessage(c.getId(), ColoredText.red("Unbekannter Befehl."));
 		}
 	}

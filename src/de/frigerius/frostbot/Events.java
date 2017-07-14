@@ -48,13 +48,12 @@ public class Events
 				if (e.getInvokerId() != _bot.QueryID)
 				{
 					final String message = e.getMessage();
-					_bot.TS3API.getClientInfo(e.getInvokerId()).onSuccess(c -> {
-						if (message.startsWith("!"))
-						{
-							LOGGER.info(String.format("%s received from %s", message, e.getInvokerName()));
+					if (message.startsWith("!"))
+					{
+						_bot.TS3API.getClientInfo(e.getInvokerId()).onSuccess(c -> {
 							_bot.getCommands().handleClientCommand(message, c);
-						}
-					});
+						});
+					}
 				}
 			}
 
