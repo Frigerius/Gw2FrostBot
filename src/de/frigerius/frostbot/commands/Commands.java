@@ -19,9 +19,11 @@ import de.frigerius.frostbot.FrostBot;
 public class Commands
 {
 	public final Map<String, BaseCommand> commands = new HashMap<>();
-	private final Map<String, BaseCommand> consoleCommands = new HashMap<>();
+	public final Map<String, BaseCommand> consoleCommands = new HashMap<>();
 	public final List<String> sortedCommands = new ArrayList<>();
+	public final List<String> sortedConsoleCommands = new ArrayList<>();
 	private final Pattern _pattern = Pattern.compile("(^(?<command>!([a-z]*(?= |$)))|((?<=[ ])((\"(?<param>(((?!\").)*))\")|(?<param2>(((?!\"|[ ]).)*)))(?=[ |\"]|$)))");
+	private final Pattern _consolePattern = Pattern.compile("(^(?<command>([a-z]*(?= |$)))|((?<=[ ])((\"(?<param>(((?!\").)*))\")|(?<param2>(((?!\"|[ ]).)*)))(?=[ |\"]|$)))");
 	private final Logger LOGGER = LoggerFactory.getLogger(Commands.class);
 	private FrostBot _bot;
 
@@ -46,6 +48,7 @@ public class Commands
 	private void registerConsoleCommand(BaseCommand command)
 	{
 		consoleCommands.put(command.getCommand().toLowerCase(), command);
+		sortedConsoleCommands.add(command.getCommand().toLowerCase());
 	}
 
 	private void createDefaultCommands()
@@ -85,6 +88,7 @@ public class Commands
 		registerCommand(new INeedUCommand(10));
 
 		// Console Commands
+		registerConsoleCommand(new HelpCommand(0, this));
 		registerConsoleCommand(new CreateChannelCommand(0));
 		registerConsoleCommand(new StopCommand(0));
 		registerConsoleCommand(new ChannelInfoCommand(0));
@@ -92,6 +96,8 @@ public class Commands
 		registerConsoleCommand(new ClientInfoCommand(0));
 		registerConsoleCommand(new ListAllDataBaseIDCommand(0));
 		registerConsoleCommand(new RefreshNewsCommand(0));
+		registerConsoleCommand(new ListGuildsCommand(0));
+		registerConsoleCommand(new DeleteGuildCommand(0));
 	}
 
 	public void sendCommandDescriptionsToClient(Client c)
@@ -182,17 +188,25 @@ public class Commands
 
 	public void handleConsoleCommand(String cmd)
 	{
-		String command = cmd;
-		String[] args = new String[0];
-		if (cmd.contains(" "))
+		Matcher m = _consolePattern.matcher(cmd);
+		String command = extractCommand(m);
+		if (command == null)
 		{
-			String[] parts = cmd.split(" ");
-			command = parts[0];
-			args = new String[parts.length - 1];
-			System.arraycopy(parts, 1, args, 0, parts.length - 1);
-
+			return;
 		}
-		LOGGER.info("Command: " + cmd);
+		String[] args = new String[0];
+		List<String> largs = new ArrayList<String>();
+		while (m.find())
+		{
+			if (m.group("param") != null)
+			{
+				largs.add(m.group("param"));
+			} else
+			{
+				largs.add(m.group("param2"));
+			}
+		}
+		args = largs.toArray(new String[largs.size()]);
 		command = command.toLowerCase();
 		if (consoleCommands.containsKey(command))
 		{

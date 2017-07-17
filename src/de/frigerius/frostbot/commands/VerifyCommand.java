@@ -45,12 +45,14 @@ public class VerifyCommand extends RequestingBaseCommand
 					{
 						if (myClient.getRequestionState() == RequestionState.ManualVerificationRequested && args.length != 1)
 						{
+							LOGGER.warn(String.format("%s: Anfrage läuft bereits.", client.getNickname()));
 							_bot.TS3API.sendPrivateMessage(client.getId(), ColoredText.red(
 									"Du hast bereits eine Anfrage eingereicht, bitte gedulde dich, bis dir jemand zur Hilfe kommt, oder nutze die automatische Verifizierung (!help verify)."));
 							return CommandResult.NoErrors;
 
 						} else if (myClient.getRequestionState() == RequestionState.AutomatedVerificationFailed)
 						{
+							LOGGER.warn(String.format("%s: Anfrage läuft bereits. (Automated-Failed)", client.getNickname()));
 							_bot.TS3API.sendPrivateMessage(client.getId(),
 									ColoredText.red("Du hast bereits eine Anfrage eingereicht, bitte gedulde dich, bis dir jemand zur Hilfe kommt."));
 							return CommandResult.NoErrors;
@@ -70,6 +72,9 @@ public class VerifyCommand extends RequestingBaseCommand
 					}
 
 				}
+			} catch (Exception e)
+			{
+				LOGGER.error("Error in Verify", e);
 			} finally
 			{
 				RemoveRequester(uid);
@@ -86,6 +91,7 @@ public class VerifyCommand extends RequestingBaseCommand
 	{
 		if (!AutomatedVerification.isValidAPIKey(apikey))
 		{
+			LOGGER.warn("API-Key ist ungültig.");
 			_bot.TS3API.sendPrivateMessage(client.getId(), ColoredText.red("Dein API-Key ist ungültig, bitte überprüfe deine Eingabe."));
 			return;
 		}
@@ -95,12 +101,14 @@ public class VerifyCommand extends RequestingBaseCommand
 			String msg = "";
 			if (returnCode == 1)
 			{
+				LOGGER.warn(String.format("%s: Automatische Verifizierung fehlgeschlagen.", client.getNickname()));
 				_bot.TS3API.sendPrivateMessage(client.getId(),
 						ColoredText.red("Leider ist bei der automatisierten Verifizierung ein Fehler aufgetreten, ich werde nun ein Ticket für dich erstellen."));
 				msg = ColoredText.green(client.getNickname() + " benötigt Hilfe bei der Verifizierung.%s");
 			}
 			if (returnCode == 2)
 			{
+				LOGGER.warn(String.format("%s: Zu häufge Verifizierung.", client.getNickname()));
 				_bot.TS3API.sendPrivateMessage(client.getId(),
 						ColoredText.red("Du hast dich zu oft mit dem selben Account angemeldet. Ich werde nun ein Ticket für dich erstellen."));
 				msg = ColoredText.green(client.getNickname() + " hat sich zu oft mit dem selben Account angemeldet und benötigt jetzt deine Hilfe.%s");

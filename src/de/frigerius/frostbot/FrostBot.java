@@ -304,6 +304,19 @@ public class FrostBot
 		}
 	}
 
+	public void removeRank(int id)
+	{
+		_permissionLock.lock();
+		try
+		{
+			_rankPermissionMap.remove(id);
+			_userRanks.remove(id);
+		} finally
+		{
+			_permissionLock.unlock();
+		}
+	}
+
 	public boolean addServerGroup(int id, boolean isUserRank)
 	{
 		return addServerGroup(id, isUserRank, 0);

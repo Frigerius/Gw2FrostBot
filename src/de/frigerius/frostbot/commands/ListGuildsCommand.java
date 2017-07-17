@@ -1,9 +1,13 @@
 package de.frigerius.frostbot.commands;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.github.theholywaffle.teamspeak3.api.wrapper.Client;
 
 public class ListGuildsCommand extends BaseGuildCommand
 {
+	private final Logger LOGGER = LoggerFactory.getLogger(ListGuildsCommand.class);
 
 	public ListGuildsCommand(int cmdPwr)
 	{
@@ -13,7 +17,13 @@ public class ListGuildsCommand extends BaseGuildCommand
 	@Override
 	protected CommandResult handleIntern(Client client, String[] args)
 	{
-		_bot.sendBulkMessages(client, "Es stehen folgende Gilden zur Verfügung:", _guildManager.getGuilds());
+		if (client != null)
+			_bot.sendBulkMessages(client, "Es stehen folgende Gilden zur Verfügung:", _guildManager.getGuilds());
+		else
+		{
+			for (String s : _guildManager.getGuilds())
+				LOGGER.info(s);
+		}
 		return CommandResult.NoErrors;
 	}
 

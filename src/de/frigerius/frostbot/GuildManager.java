@@ -360,4 +360,50 @@ public class GuildManager
 		return member;
 	}
 
+	public boolean deleteGuild(int id)
+	{
+		if (id >= _guilds.size() || id < 0)
+			return false;
+		String guildID = _guilds.get(id).getID();
+		try (Connection con = FrostBot.getSQLConnection())
+		{
+			String stmt = "SELECT SGID From Guilds Where GuildID = ?";
+			try (PreparedStatement select = con.prepareStatement(stmt))
+			{
+				select.setString(1, guildID);
+				ResultSet result = select.executeQuery();
+				if (result.next())
+				{
+					int sg = result.getInt("SGID");
+					stmt = "DELETE FROM GuildMembers Where GuildID = ?";
+					try (PreparedStatement delMembers = con.prepareStatement(stmt))
+					{
+						delMembers.setString(1, guildID);
+						delMembers.executeUpdate();
+					}
+					stmt = "DELETE FROM Guilds Where GuildID = ?";
+					try (PreparedStatement delGuild = con.prepareStatement(stmt))
+					{
+						delGuild.setString(1, guildID);
+						delGuild.executeUpdate();
+					}
+					stmt = "Delete FROM ServerGroups WHERE ID = ?";
+					try (PreparedStatement delSG = con.prepareStatement(stmt))
+					{
+						delSG.setInt(1, sg);
+						delSG.executeUpdate();
+					}
+					_bot.removeRank(sg);
+					refresh();
+					return true;
+				} else
+					return false;
+			}
+		} catch (SQLException e)
+		{
+			LOGGER.error("Error in deleting guild", e);
+			return false;
+		}
+	}
+
 }
