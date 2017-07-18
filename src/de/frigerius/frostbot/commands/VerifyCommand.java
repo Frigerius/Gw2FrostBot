@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Client;
 
 import de.frigerius.frostbot.AutomatedVerification;
+import de.frigerius.frostbot.AutomatedVerification.VerificationResult;
 import de.frigerius.frostbot.BotSettings;
 import de.frigerius.frostbot.ClientController;
 import de.frigerius.frostbot.ColoredText;
@@ -95,23 +96,30 @@ public class VerifyCommand extends RequestingBaseCommand
 			_bot.TS3API.sendPrivateMessage(client.getId(), ColoredText.red("Dein API-Key ist ungültig, bitte überprüfe deine Eingabe."));
 			return;
 		}
-		int returnCode = _verifier.verify(client, apikey);
-		if (returnCode > 0)
+		VerificationResult returnCode = _verifier.verify(client, apikey);
+		if (returnCode != VerificationResult.Success)
 		{
 			String msg = "";
-			if (returnCode == 1)
+			if (returnCode == VerificationResult.Failure || returnCode == VerificationResult.APIError)
 			{
 				LOGGER.warn(String.format("%s: Automatische Verifizierung fehlgeschlagen.", client.getNickname()));
 				_bot.TS3API.sendPrivateMessage(client.getId(),
 						ColoredText.red("Leider ist bei der automatisierten Verifizierung ein Fehler aufgetreten, ich werde nun ein Ticket für dich erstellen."));
 				msg = ColoredText.green(client.getNickname() + " benötigt Hilfe bei der Verifizierung.%s");
 			}
-			if (returnCode == 2)
+			if (returnCode == VerificationResult.TooManyVerifications)
 			{
 				LOGGER.warn(String.format("%s: Zu häufge Verifizierung.", client.getNickname()));
 				_bot.TS3API.sendPrivateMessage(client.getId(),
 						ColoredText.red("Du hast dich zu oft mit dem selben Account angemeldet. Ich werde nun ein Ticket für dich erstellen."));
 				msg = ColoredText.green(client.getNickname() + " hat sich zu oft mit dem selben Account angemeldet und benötigt jetzt deine Hilfe.%s");
+			}
+			if (returnCode == VerificationResult.ConnectionError)
+			{
+				LOGGER.warn(String.format("%s: Server nicht erreichbar.", client.getNickname()));
+				_bot.TS3API.sendPrivateMessage(client.getId(),
+						ColoredText.red("Der API-Server konnte nicht erreicht werden, bitte versuche es später erneut, oder reiche mit \"!verify\" eine Anfrage ein."));
+				return;
 			}
 			sendMsgToSupporter(client, msg, RequestionState.AutomatedVerificationFailed);
 		}

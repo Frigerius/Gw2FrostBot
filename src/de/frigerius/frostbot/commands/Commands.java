@@ -15,6 +15,7 @@ import com.github.theholywaffle.teamspeak3.api.wrapper.Client;
 import de.frigerius.frostbot.BotSettings;
 import de.frigerius.frostbot.ColoredText;
 import de.frigerius.frostbot.FrostBot;
+import de.frigerius.frostbot.commands.BaseCommand.CommandResult;
 
 public class Commands
 {
@@ -76,6 +77,7 @@ public class Commands
 		registerCommand(new LeaveGuildCommand(11));
 		registerCommand(new ListMembersCommand(1));
 		registerCommand(new AddMemberCommand(1));
+		registerCommand(new AddMembersCommand(1));
 		registerCommand(new AddGuildLeaderCommand(1));
 		registerCommand(new KickFromGuildCommand(1));
 		registerCommand(new AddGuildCommand(55));
@@ -120,7 +122,7 @@ public class Commands
 		if (command.hasClientRights(c))
 			return command.getDetailedDescription();
 		else
-			return ColoredText.red("Leider fehlen dir die nötigen Rechte für diese Information");
+			return ColoredText.red("Leider fehlen dir die nötigen Rechte für diese Information.");
 	}
 
 	public void handleClientCommand(String cmd, Client c)
@@ -153,8 +155,6 @@ public class Commands
 		args = largs.toArray(new String[largs.size()]);
 		command = command.toLowerCase();
 
-		LOGGER.info(String.format("%s: %s%s", c.getNickname(), command, sb.toString()));
-
 		BaseCommand baseCommand = null;
 		if (commands.containsKey(command))
 		{
@@ -164,16 +164,18 @@ public class Commands
 		if (baseCommand != null)
 		{
 			BaseCommand.CommandResult result = baseCommand.handle(c, args);
-			if (result == BaseCommand.CommandResult.Error)
+			if (result == CommandResult.Error)
+			{
 				_bot.TS3API.sendPrivateMessage(c.getId(), ColoredText.red("Beim ausführen des Befehls ist ein Fehler aufgetreten"));
-			if (result == BaseCommand.CommandResult.InvalidPermissions)
+			}
+			if (result == CommandResult.InvalidPermissions)
 				_bot.TS3API.sendPrivateMessage(c.getId(), ColoredText.red("Leider besitzt du nicht die Berechtigung, um diesen Befehl nutzen zu können."));
-			if (result == BaseCommand.CommandResult.ArgumentError)
-				_bot.TS3API.sendPrivateMessage(c.getId(),
-						ColoredText.red("Dein Befehl hat eine ungültige Signatur. Korrekt wäre: ") + ColoredText.green(baseCommand.getFullCommand()));
+			if (result == CommandResult.ArgumentError)
+				_bot.TS3API.sendPrivateMessage(c.getId(), ColoredText.red("Dein Befehl hat eine ungültige Signatur.\n") + ColoredText.green(baseCommand.getDetailedDescription()));
+			LOGGER.info(String.format("%s: %s%s (%s)", c.getNickname(), command, sb.toString(), result));
 		} else
 		{
-			LOGGER.info(String.format("\"Unbekannter Befehl\" will be send to %s.", c.getNickname()));
+			LOGGER.info(String.format("%s: %s%s (%s)", c.getNickname(), command, sb.toString(), "Unknown Command"));
 			_bot.TS3API.sendPrivateMessage(c.getId(), ColoredText.red("Unbekannter Befehl."));
 		}
 	}

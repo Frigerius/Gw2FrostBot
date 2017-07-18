@@ -61,7 +61,7 @@ public abstract class BaseCommand
 	/**
 	 * @return Command
 	 */
-	public String getCommand()
+	public final String getCommand()
 	{
 		return _command;
 	}
@@ -121,7 +121,7 @@ public abstract class BaseCommand
 	/**
 	 * @return full formated command with description etc.
 	 */
-	public String getDetailedDescription()
+	public final String getDetailedDescription()
 	{
 		return String.format("!%s:\n%s\n%s\n%s", _command, getDescription(), ColoredText.green(getFullCommand()), getDetails());
 	}
@@ -134,7 +134,7 @@ public abstract class BaseCommand
 	/**
 	 * @return needed power to use this command.
 	 */
-	public int getCmdPwr()
+	public final int getCmdPwr()
 	{
 		return _cmdPwr;
 	}

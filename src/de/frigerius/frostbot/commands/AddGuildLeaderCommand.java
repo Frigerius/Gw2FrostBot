@@ -65,7 +65,7 @@ public class AddGuildLeaderCommand extends RequestingBaseGuildCommand
 	@Override
 	protected String getDetails()
 	{
-		return "";
+		return "Beispiel: !addleader 42";
 	}
 
 }

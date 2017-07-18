@@ -83,13 +83,13 @@ public class GuildManager
 		}
 	}
 
-	public String addMember(Client me, Client other, String gId)
+	public String addMember(Client me, Client other, String gId, boolean isLeader)
 	{
 		for (MyGuild guild : _guilds)
 		{
 			if (guild.getID().equals(gId))
 			{
-				joinGuildIntern(other, guild, false);
+				joinGuildIntern(other, guild, isLeader);
 				return guild.getName();
 			}
 		}

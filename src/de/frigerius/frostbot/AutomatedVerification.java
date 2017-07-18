@@ -10,11 +10,17 @@ import com.github.theholywaffle.teamspeak3.api.event.ClientJoinEvent;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Client;
 
 import me.xhsun.guildwars2wrapper.GuildWars2;
+import me.xhsun.guildwars2wrapper.error.ErrorCode;
 import me.xhsun.guildwars2wrapper.error.GuildWars2Exception;
 import me.xhsun.guildwars2wrapper.model.v2.account.Account;
 
 public class AutomatedVerification
 {
+	public enum VerificationResult
+	{
+		Success, TooManyVerifications, ConnectionError, APIError, Failure
+	}
+
 	private Map<Integer, String> worlds;
 	private GuildWars2 gw2api = GuildWars2.getInstance();
 	private final Logger LOGGER = LoggerFactory.getLogger(AutomatedVerification.class);
@@ -26,7 +32,7 @@ public class AutomatedVerification
 		init();
 	}
 
-	public int verify(Client client, String apikey)
+	public VerificationResult verify(Client client, String apikey)
 	{
 		try
 		{
@@ -48,26 +54,36 @@ public class AutomatedVerification
 						{
 							_bot.TS3API.removeClientFromServerGroup(BotSettings.removeGroupIdOnVerify, client.getDatabaseId());
 						}
-						_bot.TS3API.addClientToServerGroup(groupId, client.getDatabaseId()).onSuccess(result -> {
-							if (result)
-							{
-								UserDatabase.AddAccountID(accUID, client.getNickname(), client.getUniqueIdentifier(), worldName);
-								LOGGER.info(String.format("%s was added to servergroup %s.", client.getNickname(), worldName));
-							}
-						});
+						boolean result = _bot.TS3API.addClientToServerGroup(groupId, client.getDatabaseId()).get();
+						if (result)
+						{
+							UserDatabase.AddAccountID(accUID, client.getNickname(), client.getUniqueIdentifier(), worldName);
+							LOGGER.info(String.format("%s was added to servergroup %s.", client.getNickname(), worldName));
+							return VerificationResult.Success;
+						}
 					}
-					return 0;
 				}
+
 			} else
 			{
 				LOGGER.info(String.format("%s hat sich zu oft registriert.", client.getNickname()));
-				return 2;
+				return VerificationResult.TooManyVerifications;
 			}
 		} catch (GuildWars2Exception ex)
 		{
-			LOGGER.error("Error in AutomatedVerification", ex);
+			if (ex.getErrorCode() == ErrorCode.Server)
+			{
+				return VerificationResult.ConnectionError;
+			} else
+			{
+				LOGGER.error("Error in AutomatedVerification", ex);
+				return VerificationResult.APIError;
+			}
+		} catch (Exception e)
+		{
+			LOGGER.error("AutomatedVerification failed", e);
 		}
-		return 1;
+		return VerificationResult.Failure;
 	}
 
 	public static boolean isClientVerified(Client client)

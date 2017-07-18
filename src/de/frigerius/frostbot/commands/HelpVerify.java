@@ -64,9 +64,12 @@ public class HelpVerify extends BaseCommand
 				MyClient sup = _clientController.getActiveSupporter();
 				if (sup == null)
 				{
+					LOGGER.info("No Verifier needed.");
 					_bot.TS3API.sendPrivateMessage(client.getId(), "Momentan muss niemand verifiziert werden, ich wünsche dir weiterhin einen schönen Tag :)");
+
 				} else
 				{
+					LOGGER.info(String.format("%s is active supporter.", sup.getName()));
 					_bot.TS3API.sendPrivateMessage(client.getId(), String.format("%s bearbeitet derzeitige Anfragen.", sup.getName()));
 				}
 			}
