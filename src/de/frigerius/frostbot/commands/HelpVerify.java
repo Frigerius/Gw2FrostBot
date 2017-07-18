@@ -32,7 +32,13 @@ public class HelpVerify extends BaseCommand
 		{
 			if (_clientController.isSupportNeeded())
 			{
-				_clientController.setActiveSupporter(_clientController.getSupporter(client.getId()));
+				MyClient sup = _clientController.getSupporter(client.getId());
+				if (sup == null)
+				{
+					sup = new MyClient(client);
+					_clientController.addSupporter(sup);
+				}
+				_clientController.setActiveSupporter(sup);
 				if (client.getChannelId() != BotSettings.supporterChannelID)
 				{
 					try

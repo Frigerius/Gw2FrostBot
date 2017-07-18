@@ -18,6 +18,8 @@ public class PauseVerifyCommand extends BaseCommand
 	protected CommandResult handleIntern(Client c, String[] args)
 	{
 		_clientController.removeSupporter(c.getId());
+		if (_clientController.getActiveSupporter().getId() == c.getId())
+			_clientController.setActiveSupporter(null);
 		_bot.TS3API.sendPrivateMessage(c.getId(), "Hab eine entspannte Pause.");
 		return CommandResult.NoErrors;
 	}

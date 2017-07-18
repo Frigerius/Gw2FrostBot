@@ -155,6 +155,8 @@ public class Commands
 		args = largs.toArray(new String[largs.size()]);
 		command = command.toLowerCase();
 
+		LOGGER.info(String.format("%s: %s%s", c.getNickname(), command, sb.toString()));
+
 		BaseCommand baseCommand = null;
 		if (commands.containsKey(command))
 		{
