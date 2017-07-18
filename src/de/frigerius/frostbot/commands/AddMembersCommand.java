@@ -53,6 +53,6 @@ public class AddMembersCommand extends AddMemberCommand
 	@Override
 	public String getDetails()
 	{
-		return "Beispiel1: !addmembers \"Nutzer 1\" \"Nutzer 2\"\nBeispiel2: !addmembers \"Nutzer1\" \"Nutzer 2\" \"Nutzer 3\"";
+		return "Beispiel1: !addmembers \"Nutzer 1\" \"Nutzer 2\"\nBeispiel2: !addmembers \"Nutzer 1\" \"Nutzer 2\" \"Nutzer 3\"";
 	}
 }
