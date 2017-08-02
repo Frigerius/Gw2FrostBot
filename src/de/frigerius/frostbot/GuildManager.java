@@ -59,7 +59,7 @@ public class GuildManager
 		{
 			try (Statement select = con.createStatement())
 			{
-				ResultSet result = select.executeQuery("SELECT * FROM Guilds");
+				ResultSet result = select.executeQuery("SELECT * FROM Guilds ORDER BY GuildName");
 				while (result.next())
 				{
 					_guilds.add(new MyGuild(result.getString("GuildName"), result.getString("GuildID"), result.getInt("SGID")));
