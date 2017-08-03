@@ -102,18 +102,6 @@ public class Commands
 		registerConsoleCommand(new DeleteGuildCommand(0));
 	}
 
-	public void sendCommandDescriptionsToClient(Client c)
-	{
-		for (String com : sortedCommands)
-		{
-			BaseCommand command = commands.get(com);
-			if (command != null && command.hasClientRights(c))
-			{
-				_bot.TS3API.sendPrivateMessage(c.getId(), String.format("%1$s - %2$s", ColoredText.green(command.getFullCommand()), command.getDescription()));
-			}
-		}
-	}
-
 	public String getDetailedDescription(Client c, String cmd)
 	{
 		BaseCommand command = commands.get(cmd);
