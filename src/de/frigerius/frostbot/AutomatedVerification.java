@@ -74,8 +74,13 @@ public class AutomatedVerification
 			if (ex.getErrorCode() == ErrorCode.Server)
 			{
 				return VerificationResult.ConnectionError;
+			}
+			if (ex.getErrorCode() == ErrorCode.Network)
+			{
+				return VerificationResult.ConnectionError;
 			} else
 			{
+
 				LOGGER.error("Error in AutomatedVerification", ex);
 				return VerificationResult.APIError;
 			}
