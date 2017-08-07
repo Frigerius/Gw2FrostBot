@@ -17,8 +17,8 @@ import com.github.theholywaffle.teamspeak3.api.event.ServerEditedEvent;
 import com.github.theholywaffle.teamspeak3.api.event.TS3Listener;
 import com.github.theholywaffle.teamspeak3.api.event.TextMessageEvent;
 
-import de.frigerius.frostbot.commands.BaseCommand;
 import de.frigerius.frostbot.commands.Commands;
+import de.frigerius.frostbot.commands.HelpVerify;
 
 public class Events
 {
@@ -28,7 +28,7 @@ public class Events
 	private ChannelController _channelController;
 	private ClientController _clientController;
 	private Commands _commands;
-	private BaseCommand _helpVerifyCommand;
+	private HelpVerify _helpVerifyCommand;
 
 	private boolean _init = false;
 
@@ -46,7 +46,7 @@ public class Events
 		_init = true;
 		_clientController = _bot.getClientController();
 		_commands = _bot.getCommands();
-		_helpVerifyCommand = _commands.commands.get("!helpverify");
+		_helpVerifyCommand = (HelpVerify) _commands.commands.get("!helpverify");
 		LOGGER.info("Initializing Events...");
 		_bot.TS3API.addTS3Listeners(new TS3Listener()
 		{
@@ -109,7 +109,7 @@ public class Events
 							if (MyClient.HasCmdPower(client.getServerGroups(), 20))
 							{
 								LOGGER.info(String.format("%s (Automatic): !helpverify", client.getNickname()));
-								LOGGER.info(String.format("%s (Automatic): !helpverify (%s)", client.getNickname(), _helpVerifyCommand.handle(client, new String[0])));
+								LOGGER.info(String.format("%s (Automatic): !helpverify (%s)", client.getNickname(), _helpVerifyCommand.handleAutomatic(client)));
 							}
 						});
 					}

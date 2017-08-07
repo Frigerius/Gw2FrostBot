@@ -24,8 +24,18 @@ public class HelpVerify extends BaseCommand
 		_clientController = _bot.getClientController();
 	}
 
+	public CommandResult handleAutomatic(Client client)
+	{
+		return handleHelp(client, true);
+	}
+
 	@Override
 	protected CommandResult handleIntern(Client client, String[] args)
+	{
+		return handleHelp(client, false);
+	}
+
+	private CommandResult handleHelp(Client client, boolean automatic)
 	{
 		_lock.lock();
 		try
@@ -71,7 +81,8 @@ public class HelpVerify extends BaseCommand
 				if (sup == null)
 				{
 					LOGGER.info("No Verifier needed.");
-					_bot.TS3API.sendPrivateMessage(client.getId(), "Momentan muss niemand verifiziert werden, ich wünsche dir weiterhin einen schönen Tag :)");
+					if (!automatic)
+						_bot.TS3API.sendPrivateMessage(client.getId(), "Momentan muss niemand verifiziert werden, ich wünsche dir weiterhin einen schönen Tag :)");
 
 				} else
 				{
