@@ -43,9 +43,9 @@ public class JoinGuildCommand extends RequestingBaseGuildCommand
 	}
 
 	@Override
-	public boolean hasClientRights(Client client)
+	public boolean hasClientRights(Client client,int cmdPwr)
 	{
-		return !MyClient.HasCmdPower(client.getServerGroups(), 11) && super.hasClientRights(client);
+		return !MyClient.HasCmdPower(client.getServerGroups(), 11) && super.hasClientRights(client, cmdPwr);
 	}
 
 	@Override

@@ -135,6 +135,17 @@ public class MyClient
 		return power;
 	}
 
+	public static boolean HasGreaterOrEqualCmdPower(int[] groups, int pwr)
+	{
+		for (int i : groups)
+		{
+			int tmp = FrostBot.getInstance().getCmdPower(i);
+			if (tmp >= pwr)
+				return true;
+		}
+		return false;
+	}
+
 	public static boolean HasCmdPower(int[] groups, int pwr)
 	{
 		for (int i : groups)

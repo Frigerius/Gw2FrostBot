@@ -22,9 +22,9 @@ public class ShutUpCommand extends BaseCommand
 	}
 
 	@Override
-	public boolean hasClientRights(Client c)
+	public boolean hasClientRights(Client c,int cmdPwr)
 	{
-		return super.hasClientRights(c) && !MyClient.isInServerGroup(c.getServerGroups(), BotSettings.ignoreMeGroup);
+		return super.hasClientRights(c, cmdPwr) && !MyClient.isInServerGroup(c.getServerGroups(), BotSettings.ignoreMeGroup);
 	}
 
 	@Override

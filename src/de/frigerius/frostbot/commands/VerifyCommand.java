@@ -166,7 +166,7 @@ public class VerifyCommand extends RequestingBaseCommand
 	}
 
 	@Override
-	public boolean hasClientRights(Client c)
+	public boolean hasClientRights(Client c,int cmdPwr)
 	{
 		return MyClient.isInServerGroup(c.getServerGroups(), BotSettings.guestGroup) || MyClient.isInServerGroup(c.getServerGroups(), BotSettings.removeGroupIdOnVerify);
 	}

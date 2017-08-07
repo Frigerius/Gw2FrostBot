@@ -31,7 +31,7 @@ public class LeaveGuildCommand extends RequestingBaseGuildCommand
 	}
 
 	@Override
-	public boolean hasClientRights(Client client)
+	public boolean hasClientRights(Client client,int cmdPwr)
 	{
 		return MyClient.HasCmdPower(client.getServerGroups(), getCmdPwr());
 	}

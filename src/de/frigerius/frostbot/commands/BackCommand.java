@@ -30,7 +30,7 @@ public class BackCommand extends BaseCommand
 	}
 
 	@Override
-	public boolean hasClientRights(Client c)
+	public boolean hasClientRights(Client c, int cmdPwr)
 	{
 		return true;
 	}

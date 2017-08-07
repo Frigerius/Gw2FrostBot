@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Client;
 
 import de.frigerius.frostbot.ColoredText;
+import de.frigerius.frostbot.MyClient;
 
 public class HelpCommand extends BaseCommand
 {
@@ -62,7 +63,7 @@ public class HelpCommand extends BaseCommand
 		for (String sCmd : _commands.sortedCommands)
 		{
 			BaseCommand cmd = _commands.commands.get(sCmd);
-			if (cmd != null && cmd.hasClientRights(c))
+			if (cmd != null && cmd.hasClientRights(c, MyClient.GetCmdPower(c.getServerGroups())))
 			{
 				helpMessages.add(String.format("%1$s - %2$s", ColoredText.green(cmd.getFullCommand()), cmd.getDescription()));
 			}

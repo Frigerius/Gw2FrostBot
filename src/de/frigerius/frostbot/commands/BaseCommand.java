@@ -8,6 +8,7 @@ import de.frigerius.frostbot.MyClient;
 
 /**
  * Basic class for commands.
+ * 
  * @author Vinzenz
  */
 public abstract class BaseCommand
@@ -25,39 +26,41 @@ public abstract class BaseCommand
 
 	/**
 	 * Command handle return values.
+	 * 
 	 * @author Vinzenz
 	 * 
 	 */
 	public enum CommandResult
 	{
 		/**
-		 * 	Command handled without any errors.
+		 * Command handled without any errors.
 		 */
 		NoErrors,
 		/**
-		 *  An Error occurred while handling.
+		 * An Error occurred while handling.
 		 */
 		Error,
 		/**
-		 *  User is not having the permission to use the command.
+		 * User is not having the permission to use the command.
 		 */
 		InvalidPermissions,
 		/**
-		 *  Wrong argument count/format/...
+		 * Wrong argument count/format/...
 		 */
 		ArgumentError
 	}
 
-	
 	/**
 	 * Implement your command behavior.
-	 * @param client Requestor
-	 * @param args Command arguments, maybe empty
+	 * 
+	 * @param client
+	 *            Requestor
+	 * @param args
+	 *            Command arguments, maybe empty
 	 * @return CommandResult
 	 */
 	protected abstract CommandResult handleIntern(Client client, String[] args);
 
-	
 	/**
 	 * @return Command
 	 */
@@ -87,12 +90,22 @@ public abstract class BaseCommand
 
 	/**
 	 * Checks if the user can use this command.
-	 * @param client Requestor
+	 * 
+	 * @param client
+	 *            Requestor
 	 * @return true if User can use this command, false else.
 	 */
+	public boolean hasClientRights(Client client, int cmdPwr)
+	{
+		if (cmdPwr < 0)
+			return client == null || MyClient.HasGreaterOrEqualCmdPower(client.getServerGroups(), _cmdPwr);
+		else
+			return client == null || cmdPwr >= _cmdPwr;
+	}
+
 	public boolean hasClientRights(Client client)
 	{
-		return client == null || MyClient.GetCmdPower(client.getServerGroups()) >= _cmdPwr;
+		return hasClientRights(client, -1);
 	}
 
 	/**
@@ -125,7 +138,7 @@ public abstract class BaseCommand
 	{
 		return String.format("!%s:\n%s\n%s\n%s", _command, getDescription(), ColoredText.green(getFullCommand()), getDetails());
 	}
-	
+
 	/**
 	 * @return Detailed description.
 	 */
