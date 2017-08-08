@@ -24,7 +24,11 @@ public class KickFromGuildCommand extends BaseGuildCommand
 		}
 		try
 		{
-			_guildManager.removeMember(Integer.parseInt(args[0]), id);
+			String result = _guildManager.removeMember(Integer.parseInt(args[0]), id);
+			if (result != "")
+				_bot.TS3API.sendPrivateMessage(client.getId(), ColoredText.green(String.format("%s wurde aus deiner Gilde entfernt.", result)));
+			else
+				_bot.TS3API.sendPrivateMessage(client.getId(), ColoredText.red("Fehler beim entfernen des Mitglieds."));
 		} catch (NumberFormatException ex)
 		{
 			return CommandResult.ArgumentError;
@@ -33,7 +37,7 @@ public class KickFromGuildCommand extends BaseGuildCommand
 	}
 
 	@Override
-	public boolean hasClientRights(Client client,int cmdPwr)
+	public boolean hasClientRights(Client client, int cmdPwr)
 	{
 		return MyClient.HasCmdPower(client.getServerGroups(), getCmdPwr());
 	}
@@ -47,7 +51,7 @@ public class KickFromGuildCommand extends BaseGuildCommand
 	@Override
 	public String getDescription()
 	{
-		return "Entfernt das Mitglied mit der angegeben ID aus der ServerGruppe der Gilde.";
+		return "Entfernt das Mitglied mit der angegebenen ID aus der ServerGruppe der Gilde.";
 	}
 
 	@Override

@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.theholywaffle.teamspeak3.api.wrapper.Client;
+import com.github.theholywaffle.teamspeak3.api.wrapper.DatabaseClientInfo;
 
 import me.xhsun.guildwars2wrapper.GuildWars2;
 import me.xhsun.guildwars2wrapper.error.GuildWars2Exception;
@@ -187,7 +188,7 @@ public class GuildManager
 		return false;
 	}
 
-	public void removeMember(int memberId, String guildID)
+	public String removeMember(int memberId, String guildID)
 	{
 		String userUID = null;
 		try (Connection con = FrostBot.getSQLConnection())
@@ -208,11 +209,25 @@ public class GuildManager
 			LOGGER.error("Error on selecting GuildMember.");
 		}
 		if (userUID == null)
-			return;
-		_bot.TS3API.getDatabaseClientByUId(userUID).onSuccess(client -> {
-			removeUserFromServerGroup(guildID, client.getDatabaseId());
-		});
-		removeUserFromGuild(userUID);
+			return "";
+
+		DatabaseClientInfo client;
+		try
+		{
+			client = _bot.TS3API.getDatabaseClientByUId(userUID).get();
+			if (client != null)
+			{
+				if (removeUserFromServerGroup(guildID, client.getDatabaseId()))
+				{
+					removeUserFromGuild(userUID);
+					return client.getNickname();
+				}
+			}
+		} catch (InterruptedException e)
+		{
+			LOGGER.error("Error on accessing Client Database", e);
+		}
+		return "";
 	}
 
 	public void LeaveGuild(Client client)
@@ -236,8 +251,8 @@ public class GuildManager
 		}
 		if (gId == null)
 			return;
-		removeUserFromServerGroup(gId, client.getDatabaseId());
-		removeUserFromGuild(client.getUniqueIdentifier());
+		if (removeUserFromServerGroup(gId, client.getDatabaseId()))
+			removeUserFromGuild(client.getUniqueIdentifier());
 	}
 
 	private void removeUserFromGuild(String userUID)
@@ -256,16 +271,24 @@ public class GuildManager
 		}
 	}
 
-	private void removeUserFromServerGroup(String gId, int userDBID)
+	private boolean removeUserFromServerGroup(String gId, int userDBID)
 	{
 		for (MyGuild guild : _guilds)
 		{
 			if (guild.getID().equals(gId))
 			{
-				_bot.TS3API.removeClientFromServerGroup(guild.getTsGroupId(), userDBID);
-				return;
+				try
+				{
+					return _bot.TS3API.removeClientFromServerGroup(guild.getTsGroupId(), userDBID).get();
+				} catch (InterruptedException e)
+				{
+					LOGGER.error("Error in removing Client from server group", e);
+					return false;
+				}
+
 			}
 		}
+		return false;
 	}
 
 	public boolean addGuild(String apiKey, String guildNameClean)
