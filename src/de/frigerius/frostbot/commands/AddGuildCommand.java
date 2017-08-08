@@ -2,7 +2,6 @@ package de.frigerius.frostbot.commands;
 
 import com.github.theholywaffle.teamspeak3.api.wrapper.Client;
 
-import de.frigerius.frostbot.AutomatedVerification;
 import de.frigerius.frostbot.ColoredText;
 
 public class AddGuildCommand extends BaseGuildCommand
@@ -19,7 +18,7 @@ public class AddGuildCommand extends BaseGuildCommand
 		if (args.length != 2)
 			return CommandResult.ArgumentError;
 		String apiKey = args[0];
-		if (!AutomatedVerification.isValidAPIKey(apiKey))
+		if (!_bot.isValidAPIKey(apiKey))
 			return CommandResult.ArgumentError;
 		String guildNameClean = args[1];
 

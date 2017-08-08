@@ -95,13 +95,15 @@ public class MaintenanceBot
 			String createGuilds = "CREATE TABLE Guilds(GuildID VARCHAR(40) NOT NULL PRIMARY KEY, SGID INT(11), GuildName VARCHAR(40), FOREIGN KEY (SGID) REFERENCES ServerGroups(ID))";
 			String createGuildmembers = "CREATE TABLE GuildMembers(MemberID INT(11) NOT NULL PRIMARY KEY AUTO_INCREMENT, UserUID VARCHAR(40), GuildID VARCHAR(40), IsLeader BOOLEAN, FOREIGN KEY (UserUID) REFERENCES Users(UserUID), FOREIGN KEY (GuildID) REFERENCES Guilds(GuildID))";
 			String createEvents = "CREATE TABLE Events(EventID INT(11) NOT NULL PRIMARY KEY AUTO_INCREMENT, EventName VARCHAR(255), StartTime DATETIME, EndTime DATETIME, ChannelID INT(11), UserUID VARCHAR(40), IsCanceled BOOLEAN, FOREIGN KEY (UserUID) REFERENCES Users(UserUID))";
-			String createVerifications = "CREATE TABLE Verifications(AccountID VARCHAR(36) NOT NULL PRIMARY KEY, NumOfRegs INT(11), FirstUserUID VARCHAR(40), SecondUserUID VARCHAR(40), Server VARCHAR(20), LastEdit DATETIME, FOREIGN KEY (FirstUserUID) REFERENCES Users(UserUID), FOREIGN KEY (SecondUserUID) REFERENCES Users(UserUID))";
+			String createVerifications = "CREATE TABLE Verifications(AccountID VARCHAR(36) NOT NULL PRIMARY KEY, NumOfRegs INT(11), FirstUserUID VARCHAR(40), SecondUserUID VARCHAR(40), Server VARCHAR(20), LastEdit DATETIME, ForumUserName VARCHAR(50), FOREIGN KEY (FirstUserUID) REFERENCES Users(UserUID), FOREIGN KEY (SecondUserUID) REFERENCES Users(UserUID))";
+			String createTickets = "CREATE TABLE Tickets(TicketID INT(11) NOT NULL PRIMARY KEY AUTO_INCREMENT, RequestorUID VARCHAR(40) NOT NULL, State VARCHAR(15), SupporterUID VARCHAR(40), LastEdit DATETIME, Message VARCHAR(1024), Comment VARCHAR(1024), FOREIGN KEY (RequestorUID) REFERENCES Users(UserUID), FOREIGN KEY (SupporterUID) REFERENCES Users(UserUID))";
 			stmt.addBatch(createUsers);
 			stmt.addBatch(createServerGroups);
 			stmt.addBatch(createGuilds);
 			stmt.addBatch(createGuildmembers);
 			stmt.addBatch(createEvents);
 			stmt.addBatch(createVerifications);
+			stmt.addBatch(createTickets);
 			stmt.executeBatch();
 			con.commit();
 		} catch (SQLException e)

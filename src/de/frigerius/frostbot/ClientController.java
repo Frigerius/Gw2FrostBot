@@ -30,7 +30,7 @@ public class ClientController
 
 	public void clientJoined(ClientJoinEvent e)
 	{
-		if (AutomatedVerification.checkVerify(e))
+		if (checkVerify(e))
 		{
 			// Logger.info(String.format("Welcome message will be send to %s : %s.", e.getClientId(), e.getClientNickname()));
 			_bot.TS3API.sendPrivateMessage(e.getClientId(), makeVerifyMessage()).onFailure(result -> {
@@ -83,6 +83,16 @@ public class ClientController
 		{
 			_activeSupLock.unlock();
 		}
+	}
+	
+	public static boolean checkVerify(ClientJoinEvent clientEvent)
+	{
+		return checkVerify(MyClient.makeStringToServerGroups(clientEvent.getClientServerGroups()));
+	}
+	
+	private static boolean checkVerify(int[] groups)
+	{
+		return MyClient.isInServerGroup(groups, BotSettings.guestGroup) || MyClient.isInServerGroup(groups, BotSettings.removeGroupIdOnVerify);
 	}
 
 	private String makeVerifyMessage()

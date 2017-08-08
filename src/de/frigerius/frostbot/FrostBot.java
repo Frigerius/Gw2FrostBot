@@ -35,7 +35,6 @@ public class FrostBot
 	private MyConnection _connection;
 	private Tasks _tasks;
 	private Commands _commands;
-	private AutomatedVerification _verifier;
 	private ClientController _clientController;
 	private Events _events;
 	private Console _console;
@@ -54,7 +53,6 @@ public class FrostBot
 		_instance = this;
 		_tasks = new Tasks();
 		_commands = new Commands();
-		_verifier = new AutomatedVerification();
 		_clientController = new ClientController();
 		_events = new Events();
 		_connection = new MyConnection(() -> onConnected());
@@ -71,11 +69,6 @@ public class FrostBot
 	public Tasks getTasks()
 	{
 		return _tasks;
-	}
-
-	public AutomatedVerification getVerifier()
-	{
-		return _verifier;
 	}
 
 	public Commands getCommands()
@@ -359,5 +352,19 @@ public class FrostBot
 			LOGGER.error("InterruptException on add ServerGroups");
 			return false;
 		}
+	}
+
+	public boolean isValidAPIKey(String key)
+	{
+		int[] lengths = { 8, 4, 4, 4, 20, 4, 4, 4, 12 };
+		String[] split = key.split("-");
+		if (lengths.length != split.length)
+			return false;
+		for (int i = 0; i < lengths.length; i++)
+		{
+			if (split[i].length() != lengths[i])
+				return false;
+		}
+		return true;
 	}
 }
