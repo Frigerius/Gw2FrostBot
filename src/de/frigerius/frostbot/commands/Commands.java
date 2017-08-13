@@ -81,6 +81,10 @@ public class Commands
 		registerCommand(new AddGuildLeaderCommand(1));
 		registerCommand(new KickFromGuildCommand(1));
 		registerCommand(new AddGuildCommand(55));
+		//Ticket Commands
+		registerCommand(new ClaimTicketCommand(50));
+		registerCommand(new CloseTicketCommand(50));
+		registerCommand(new ListOpenTicktetsCommand(50));
 
 		// AFK
 		registerCommand(new AFKCommand(0));

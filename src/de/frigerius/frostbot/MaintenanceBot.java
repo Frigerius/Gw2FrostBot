@@ -90,7 +90,7 @@ public class MaintenanceBot
 	{
 		try (Statement stmt = con.createStatement())
 		{
-			String createUsers = "CREATE TABLE Users(UserUID VARCHAR(40) NOT NULL PRIMARY KEY, UserName VARCHAR(255) NOT NULL, IgnoreMe BOOLEAN Default FALSE)";
+			String createUsers = "CREATE TABLE Users(UserUID VARCHAR(40) NOT NULL PRIMARY KEY, UserName VARCHAR(255) NOT NULL)";
 			String createServerGroups = "CREATE TABLE ServerGroups(ID INT(11) NOT NULL PRIMARY KEY, Name VARCHAR(255), IsUserRank BOOLEAN, CmdPower INT(11))";
 			String createGuilds = "CREATE TABLE Guilds(GuildID VARCHAR(40) NOT NULL PRIMARY KEY, SGID INT(11), GuildName VARCHAR(40), FOREIGN KEY (SGID) REFERENCES ServerGroups(ID))";
 			String createGuildmembers = "CREATE TABLE GuildMembers(MemberID INT(11) NOT NULL PRIMARY KEY AUTO_INCREMENT, UserUID VARCHAR(40), GuildID VARCHAR(40), IsLeader BOOLEAN, FOREIGN KEY (UserUID) REFERENCES Users(UserUID), FOREIGN KEY (GuildID) REFERENCES Guilds(GuildID))";
