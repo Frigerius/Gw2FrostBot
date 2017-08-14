@@ -21,17 +21,11 @@ import de.frigerius.frostbot.FrostBot;
 import de.frigerius.frostbot.MyClient;
 import de.frigerius.frostbot.MyClient.RequestionState;
 import de.frigerius.frostbot.UserDatabase;
+import de.frigerius.frostbot.commands.Verifier.VerificationResult;
 import me.xhsun.guildwars2wrapper.GuildWars2;
-import me.xhsun.guildwars2wrapper.error.ErrorCode;
-import me.xhsun.guildwars2wrapper.error.GuildWars2Exception;
-import me.xhsun.guildwars2wrapper.model.v2.account.Account;
 
 public class VerifyCommand extends RequestingBaseCommand
 {
-	public enum VerificationResult
-	{
-		Success, TooManyVerifications, ConnectionError, APIError, Failure
-	}
 
 	private final Logger LOGGER = LoggerFactory.getLogger(VerifyCommand.class);
 	private ClientController _clientController;
@@ -54,44 +48,67 @@ public class VerifyCommand extends RequestingBaseCommand
 		{
 			try
 			{
-				if (isClientVerified(client))
+				boolean isVerified = isClientVerified(client);
+				boolean isForumRequest = args.length == 2;
+				if (isVerified && !isForumRequest)
 				{
 					_bot.TS3API.sendPrivateMessage(client.getId(), ColoredText.green("Du bist bereits verifiziert."));
-				} else
+					return CommandResult.NoErrors;
+				}
+				boolean runningRequest = false;
+				if (!isVerified)
 				{
 					MyClient myClient = _clientController.findHelpRequester(client.getId());
-					if (myClient != null)
+					runningRequest = myClient != null;
+					if (runningRequest)
 					{
-						if (myClient.getRequestionState() == RequestionState.ManualVerificationRequested && args.length != 1)
+						if (myClient.getRequestionState() == RequestionState.ManualVerificationRequested && args.length == 0)
 						{
 							LOGGER.warn(String.format("%s: Anfrage läuft bereits.", client.getNickname()));
 							_bot.TS3API.sendPrivateMessage(client.getId(), ColoredText.red(
 									"Du hast bereits eine Anfrage eingereicht, bitte gedulde dich, bis dir jemand zur Hilfe kommt, oder nutze die automatische Verifizierung (!help verify)."));
 							return CommandResult.NoErrors;
-
-						} else if (myClient.getRequestionState() == RequestionState.AutomatedVerificationFailed)
+						}
+						if (myClient.getRequestionState() == RequestionState.AutomatedVerificationFailed && args.length == 1)
 						{
 							LOGGER.warn(String.format("%s: Anfrage läuft bereits. (Automated-Failed)", client.getNickname()));
 							_bot.TS3API.sendPrivateMessage(client.getId(),
 									ColoredText.red("Du hast bereits eine Anfrage eingereicht, bitte gedulde dich, bis dir jemand zur Hilfe kommt."));
 							return CommandResult.NoErrors;
 						}
-						_clientController.removeHelpRequester(client.getId());
+						if (args.length == 1)
+						{
+							_clientController.removeHelpRequester(client.getId());
+							runningRequest = false;
+						}
 					}
-					if (args.length == 0)
-					{
-						handleDirectCall(client);
-					} else if (args.length == 1 || args.length == 2)
-					{
-						String forumUserName = args.length == 2 ? args[1] : null;
-						handleVerify(client, args[0], forumUserName);
-					} else
-					{
-						LOGGER.info(String.format("Argument Fehler, ungülige Anzahl von Argumenten %s", args.length));
-						return CommandResult.ArgumentError;
-					}
-
 				}
+				if (args.length == 0)
+				{
+					handleDirectCall(client);
+				} else if (args.length == 1 || args.length == 2)
+				{
+					_bot.TS3API.sendPrivateMessage(client.getId(), "Ich habe deinen Key erhalten. Bitte habe einen Moment Geduld.");
+					Verifier verifier = new Verifier(gw2api, _worlds, client, args[0], isForumRequest ? args[1] : null);
+					try (Connection con = FrostBot.getSQLConnection())
+					{
+						UserDatabase.AddUser(con, client.getUniqueIdentifier(), client.getNickname());
+						if (!isVerified && !runningRequest)
+						{
+							if (!handleVerify(verifier.verifyTS(con), client))
+								return CommandResult.NoErrors;
+						}
+						if (isForumRequest)
+						{
+							handleForumVerify(verifier.verifyForum(con), client, con, args[1]);
+						}
+					}
+				} else
+				{
+					LOGGER.info(String.format("Argument Fehler, ungülige Anzahl von Argumenten %s", args.length));
+					return CommandResult.ArgumentError;
+				}
+
 			} catch (Exception e)
 			{
 				LOGGER.error("Error in Verify", e);
@@ -107,42 +124,87 @@ public class VerifyCommand extends RequestingBaseCommand
 		return CommandResult.NoErrors;
 	}
 
-	private void handleVerify(Client client, String apikey, String forumUserName)
+	private boolean handleVerify(VerificationResult result, Client client)
 	{
-		if (!_bot.isValidAPIKey(apikey))
-		{
-			LOGGER.warn("API-Key ist ungültig.");
-			_bot.TS3API.sendPrivateMessage(client.getId(), ColoredText.red("Dein API-Key ist ungültig, bitte überprüfe deine Eingabe."));
-			return;
-		}
-		VerificationResult returnCode = verify(client, apikey, forumUserName);
-		if (returnCode != VerificationResult.Success)
+		if (result != VerificationResult.Success)
 		{
 			String msg = "";
-			if (returnCode == VerificationResult.Failure || returnCode == VerificationResult.APIError)
+			if (result == VerificationResult.InvalidAPIKey)
+			{
+				_bot.TS3API.sendPrivateMessage(client.getId(), ColoredText.red("Dein API-Key ist ungültig, bitte überprüfe deine Eingabe."));
+				return false;
+			}
+			if (result == VerificationResult.Failure || result == VerificationResult.APIError)
 			{
 				LOGGER.warn(String.format("%s: Automatische Verifizierung fehlgeschlagen.", client.getNickname()));
-				_bot.TS3API.sendPrivateMessage(client.getId(),
-						ColoredText.red("Leider ist bei der automatisierten Verifizierung ein Fehler aufgetreten, ich werde nun ein Ticket für dich erstellen."));
+				_bot.TS3API.sendPrivateMessage(client.getId(), ColoredText
+						.red("Leider ist bei der automatisierten Verifizierung ein Fehler aufgetreten, ich werde die zuständige Instanz über dein Anliegen informieren."));
 				msg = ColoredText.green(client.getNickname() + " benötigt Hilfe bei der Verifizierung.%s");
 			}
-			if (returnCode == VerificationResult.TooManyVerifications)
+			if (result == VerificationResult.TooManyVerifications)
 			{
 				LOGGER.warn(String.format("%s: Zu häufge Verifizierung.", client.getNickname()));
 				_bot.TS3API.sendPrivateMessage(client.getId(),
 						ColoredText.red("Du hast dich zu oft mit dem selben Account angemeldet. Ich werde nun ein Ticket für dich erstellen."));
 				msg = ColoredText.green(client.getNickname() + " hat sich zu oft mit dem selben Account angemeldet und benötigt jetzt deine Hilfe.%s");
 			}
-			if (returnCode == VerificationResult.ConnectionError)
+			if (result == VerificationResult.ConnectionError)
 			{
 				LOGGER.warn(String.format("%s: Server nicht erreichbar.", client.getNickname()));
 				_bot.TS3API.sendPrivateMessage(client.getId(),
 						ColoredText.red("Der API-Server konnte nicht erreicht werden, bitte versuche es später erneut, oder reiche mit \"!verify\" eine Anfrage ein."));
-				return;
+				return false;
 			}
 			sendMsgToSupporter(client, msg, RequestionState.AutomatedVerificationFailed);
 		}
+		return true;
 
+	}
+
+	private void handleForumVerify(VerificationResult result, Client client, Connection con, String fUsername)
+	{
+		if (result == VerificationResult.Success)
+		{
+			_bot.TS3API.sendPrivateMessage(client.getId(), "Es wurde für dich ein Ticket für die Verifizierung im Forum erstellt.");
+		} else
+		{
+			if (result == VerificationResult.InvalidAPIKey)
+			{
+				_bot.TS3API.sendPrivateMessage(client.getId(), ColoredText.red("Dein API-Key ist ungültig, bitte überprüfe deine Eingabe."));
+			} else if (result == VerificationResult.Failure || result == VerificationResult.APIError)
+			{
+				LOGGER.warn(String.format("%s: Automatische Verifizierung fehlgeschlagen. (Forum)", client.getNickname()));
+				_bot.TS3API.sendPrivateMessage(client.getId(),
+						ColoredText.red("Leider ist bei deiner Anfrage ein Fehler aufgetreten. Ich werde für dein Anliegen ein Ticket erstellen."));
+				String sql = "INSERT INTO Tickets (RequestorUID, State, Message, LastEdit) VALUES (?, ?, ?, ?)";
+				try (PreparedStatement insrt = con.prepareStatement(sql))
+				{
+					insrt.setString(1, client.getUniqueIdentifier());
+					insrt.setString(2, "Open");
+					insrt.setString(3, String.format("Problem bei automatischer Server-Bestätigung. Anfrage wurde von %s für den Nutzernamen %s eingereicht.", client.getNickname(),
+							fUsername));
+					Date date = new Date();
+					Timestamp stamp = new Timestamp(date.getTime());
+					insrt.setTimestamp(4, stamp);
+					insrt.executeUpdate();
+
+				} catch (SQLException e)
+				{
+					LOGGER.error("Error adding Ticket", e);
+					_bot.TS3API.sendPrivateMessage(client.getId(),
+							ColoredText.red("Leider ist ein Fehler bei der generierung deines Tickets aufgetreten. Bitte wende dich persönlich an die zuständige Instanz."));
+				}
+			} else if (result == VerificationResult.ForumVerificationInProgress)
+			{
+				_bot.TS3API.sendPrivateMessage(client.getId(), ColoredText.red("Für den Account wurde bereits eine Anfrage auf Verifizierung im Forum eingereicht."));
+
+			} else if (result == VerificationResult.ConnectionError)
+			{
+				LOGGER.warn(String.format("%s: Server nicht erreichbar. (Forum)", client.getNickname()));
+				_bot.TS3API.sendPrivateMessage(client.getId(), ColoredText.red("Der API-Server konnte nicht erreicht werden, bitte versuche es später erneut."));
+
+			}
+		}
 	}
 
 	private void handleDirectCall(Client client)
@@ -181,164 +243,6 @@ public class VerifyCommand extends RequestingBaseCommand
 			{
 				LOGGER.error("Error in moving client.", ex);
 			}
-		}
-	}
-
-	private VerificationResult verify(Client client, String apikey, String forumUserName)
-	{
-		try
-		{
-			LOGGER.info(String.format("Api wird angefragt für %s", client.getNickname()));
-			_bot.TS3API.sendPrivateMessage(client.getId(), "Ich habe deinen Key erhalten. Bitte habe einen Moment Geduld.");
-			Account account = gw2api.getSynchronous().getAccountInfo(apikey);
-			LOGGER.info(String.format("Anfrage der API abgeschlossen für %s", client.getNickname()));
-			String accUID = account.getId();
-			int accUses = UserDatabase.getAccountUsages(accUID);
-			// Check if request is valid
-			if (accUses < 2 || forumUserName != null)
-			{
-				String worldName = _worlds.get(account.getWorldId());
-				if (BotSettings.server_groupMap.containsKey(worldName))
-				{
-					// If TS verification is Valid
-					if (accUses < 2)
-					{
-						if (verifyInTs(client, worldName) == VerificationResult.Failure)
-							return VerificationResult.Failure;
-					}
-					// Update Database
-					try (Connection con = FrostBot.getSQLConnection())
-					{
-						con.setAutoCommit(false);
-						// Add User (If needed)
-						UserDatabase.AddUser(con, client.getUniqueIdentifier(), client.getNickname());
-						// Did we verified the user?
-						if (accUses < 2)
-							insertUser(con, accUID, client.getNickname(), client.getUniqueIdentifier(), worldName);
-						// Does the user (also) wants to be verified in Forum?
-						if (forumUserName != null)
-						{
-							addTicket(con, client, worldName, forumUserName);
-							insertForumUserName(con, accUID, worldName, forumUserName);
-						}
-						con.commit();
-						con.setAutoCommit(true);
-						return VerificationResult.Success;
-
-					} catch (SQLException e)
-					{
-						LOGGER.error("Couldn't connect to Databse.", e);
-					}
-				}
-
-			} else
-			{
-				LOGGER.info(String.format("%s hat sich zu oft registriert.", client.getNickname()));
-				return VerificationResult.TooManyVerifications;
-			}
-		} catch (GuildWars2Exception ex)
-		{
-			if (ex.getErrorCode() == ErrorCode.Server)
-			{
-				return VerificationResult.ConnectionError;
-			}
-			if (ex.getErrorCode() == ErrorCode.Network)
-			{
-				return VerificationResult.ConnectionError;
-			} else
-			{
-
-				LOGGER.error("Error in AutomatedVerification", ex);
-				return VerificationResult.APIError;
-			}
-		} catch (Exception e)
-		{
-			LOGGER.error("AutomatedVerification failed", e);
-		}
-		return VerificationResult.Failure;
-	}
-
-	private VerificationResult verifyInTs(Client client, String worldName) throws InterruptedException
-	{
-		int groupId = BotSettings.server_groupMap.get(worldName);
-		if (_bot.isUserRank(groupId))
-		{
-			LOGGER.info(String.format("Adding %s to servergroup %s...", client.getNickname(), worldName));
-			if (BotSettings.removeGroupIdOnVerify != -1 && MyClient.isInServerGroup(client.getServerGroups(), BotSettings.removeGroupIdOnVerify))
-			{
-				_bot.TS3API.removeClientFromServerGroup(BotSettings.removeGroupIdOnVerify, client.getDatabaseId());
-			}
-			boolean result = _bot.TS3API.addClientToServerGroup(groupId, client.getDatabaseId()).get();
-			if (result)
-			{
-				LOGGER.info(String.format("%s was added to servergroup %s.", client.getNickname(), worldName));
-				return VerificationResult.Success;
-			}
-		}
-		return VerificationResult.Failure;
-	}
-
-	private void addTicket(Connection con, Client client, String worldName, String forumUserName)
-	{
-		String sql = "INSERT INTO Tickets (RequestorUID, State, Message, LastEdit) VALUES (?, ?, ?, ?)";
-		try (PreparedStatement insrt = con.prepareStatement(sql))
-		{
-			insrt.setString(1, client.getUniqueIdentifier());
-			insrt.setString(2, "Open");
-			insrt.setString(3, String.format("Forums-Verifizierung: Nutzername: %s | Server: %s", forumUserName, worldName));
-			Date date = new Date();
-			Timestamp stamp = new Timestamp(date.getTime());
-			insrt.setTimestamp(4, stamp);
-			insrt.executeUpdate();
-		} catch (SQLException e)
-		{
-			LOGGER.error("Error on adding Ticket");
-		}
-	}
-
-	private void insertForumUserName(Connection con, String accountId, String server, String forumUserName)
-	{
-		String insertSQL = "INSERT INTO Verifications (AccountID, Server, LastEdit, ForumUserName) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE Server = ?, LastEdit = ?, ForumUserName = ?";
-		try (PreparedStatement insrt = con.prepareStatement(insertSQL))
-		{
-			insrt.setString(1, accountId);
-			insrt.setString(2, server);
-			Date date = new Date();
-			Timestamp stamp = new Timestamp(date.getTime());
-			insrt.setTimestamp(3, stamp);
-			insrt.setString(4, forumUserName);
-			// Update
-			insrt.setString(5, server);
-			insrt.setTimestamp(6, stamp);
-			insrt.setString(7, forumUserName);
-			insrt.executeUpdate();
-		} catch (SQLException e)
-		{
-			LOGGER.error("Error on selecting usages.");
-		}
-	}
-
-	private void insertUser(Connection con, String accountId, String nickname, String uid, String server)
-	{
-		String insertSQL = "INSERT INTO Verifications (AccountID, NumOfRegs, FirstUserUID, Server, LastEdit) VALUES (?, ?, ?, ?, ?) "
-				+ "ON DUPLICATE KEY UPDATE NumOfRegs = ?, SecondUserUID = ?, Server = ?, LastEdit = ?";
-		try (PreparedStatement insrt = con.prepareStatement(insertSQL))
-		{
-			insrt.setString(1, accountId);
-			insrt.setInt(2, 1);
-			insrt.setString(3, uid);
-			insrt.setString(4, server);
-			Date date = new Date();
-			Timestamp stamp = new Timestamp(date.getTime());
-			insrt.setTimestamp(5, stamp);
-			insrt.setInt(6, 2);
-			insrt.setString(7, uid);
-			insrt.setString(8, server);
-			insrt.setTimestamp(9, stamp);
-			insrt.executeUpdate();
-		} catch (SQLException e)
-		{
-			LOGGER.error("Error on selecting usages.");
 		}
 	}
 
@@ -411,13 +315,13 @@ public class VerifyCommand extends RequestingBaseCommand
 	@Override
 	public boolean hasClientRights(Client c, int cmdPwr)
 	{
-		return MyClient.isInServerGroup(c.getServerGroups(), BotSettings.guestGroup) || MyClient.isInServerGroup(c.getServerGroups(), BotSettings.removeGroupIdOnVerify);
+		return true;
 	}
 
 	@Override
 	public String getArguments()
 	{
-		return "[(API-Key)]";
+		return "[(API-Key)] [(Forum-Name)]";
 	}
 
 	@Override
@@ -433,6 +337,8 @@ public class VerifyCommand extends RequestingBaseCommand
 				+ "Für die automatische Verifizierung, benötigst du deinen [url=https://wiki.guildwars2.com/wiki/API:API_key]API-KEY[/url]. Diesen kannst du über [url]https://account.arena.net/applications[/url] erstellen.\n"
 				+ "Anschließend kannst du den Key als Argument für den Befehl übergeben:\n"
 				+ ColoredText.green("Beispiel: !verify XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXXXXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX") + "\n"
+				+ "Durch übergabe deines Forums-Nutzernamen, erstellst du eine Anfragea auch dort verifiziert zu werden:\n"
+				+ ColoredText.green("Beispiel: !verify XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXXXXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX \"Mein Nutzername\"") + "\n"
 				+ ColoredText.red("Der automatische Prozess kann einige Sekunden in Anspruch nehmen!");
 	}
 

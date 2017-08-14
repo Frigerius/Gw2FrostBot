@@ -88,16 +88,8 @@ public class UserDatabase
 		return 0;
 	}
 
-	public static int getAccountUsages(String id)
+	public static int getAccountUsages(Connection connection, String id)
 	{
-		try (Connection connection = FrostBot.getSQLConnection())
-		{
-			return select(connection, id);
-
-		} catch (SQLException e)
-		{
-			LOGGER.error("Couldn't connect to Databse.", e);
-		}
-		return 0;
+		return select(connection, id);
 	}
 }
