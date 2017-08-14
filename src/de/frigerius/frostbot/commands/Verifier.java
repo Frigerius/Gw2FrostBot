@@ -94,10 +94,17 @@ public class Verifier
 
 	public VerificationResult verifyForum(Connection con) throws SQLException
 	{
-		if (!_isForumVerificationRequested(con))
-			return CreateForumVerificationRequest(con);
-		else
-			return VerificationResult.ForumVerificationInProgress;
+		VerificationResult requestResult = requestAPI();
+		if (requestResult == VerificationResult.Success)
+		{
+			if (!_isForumVerificationRequested(con))
+				return CreateForumVerificationRequest(con);
+			else
+				return VerificationResult.ForumVerificationInProgress;
+		} else
+		{
+			return requestResult;
+		}
 	}
 
 	public boolean _isForumVerificationRequested(Connection con) throws SQLException

@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import com.github.theholywaffle.teamspeak3.api.wrapper.Client;
 
+import de.frigerius.frostbot.ColoredText;
 import de.frigerius.frostbot.FrostBot;
 import de.frigerius.frostbot.UserDatabase;
 
@@ -38,7 +39,7 @@ public class CloseTicketCommand extends BaseCommand
 			{
 				if (!UserDatabase.AddUser(con, client.getUniqueIdentifier(), client.getNickname()))
 					return CommandResult.Error;
-				String sql = "UPDATE Tickets SET State = ?, LastEdit = ?, SupporterUID = ?, Comment = ? WHERE TicketID = ? AND (State = ? OR State = ?)";
+				String sql = "UPDATE Tickets SET State = ?, LastEdit = ?, SupporterUID = ?, Comment = ? WHERE TicketID = ? AND (State = ? OR State = ?) AND (SupporterUID = NULL OR SupporterUID = ?)";
 				try (PreparedStatement updt = con.prepareStatement(sql))
 				{
 					updt.setString(1, "Closed");
@@ -50,12 +51,13 @@ public class CloseTicketCommand extends BaseCommand
 					updt.setInt(5, ticketID);
 					updt.setString(6, "Open");
 					updt.setString(7, "InProgress");
+					updt.setString(8, client.getUniqueIdentifier());
 					if (updt.executeUpdate() == 0)
 					{
-						_bot.TS3API.sendPrivateMessage(client.getId(), "Leider konnte das Ticket nicht geschlossen werden.");
-						return CommandResult.Error;
+						_bot.TS3API.sendPrivateMessage(client.getId(), ColoredText.red("Leider konnte das Ticket nicht geschlossen werden. Bist du sicher, dass es dir gehört?"));
+						return CommandResult.NoErrors;
 					}
-					_bot.TS3API.sendPrivateMessage(client.getId(), "Du hast das Ticket erfolgreich geschlossen.");
+					_bot.TS3API.sendPrivateMessage(client.getId(), ColoredText.green("Du hast das Ticket erfolgreich geschlossen."));
 					return CommandResult.NoErrors;
 
 				}

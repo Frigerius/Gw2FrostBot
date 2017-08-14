@@ -28,7 +28,8 @@ public class ListOpenTicktetsCommand extends BaseCommand
 	{
 		try (Connection con = FrostBot.getSQLConnection())
 		{
-			String sql = "SELECT * FROM Tickets WHERE State = ? OR (State = ? AND SupporterUID = ?)";
+			String sql = "SELECT TicketID, State, Message, rUsers.UserName, sUsers.UserName FROM Tickets LEFT JOIN Users rUsers ON Tickets.RequestorUID = rUsers.UserUID LEFT JOIN Users sUsers ON Tickets.SupporterUID = sUsers.UserUID WHERE State = ? OR (State = ? AND SupporterUID = ?)";
+
 			try (PreparedStatement sel = con.prepareStatement(sql))
 			{
 				sel.setString(1, "Open");
@@ -38,7 +39,20 @@ public class ListOpenTicktetsCommand extends BaseCommand
 				List<String> tickets = new ArrayList<>();
 				while (set.next())
 				{
-					tickets.add(String.format("ID: %s | %s | %s", set.getString("TicketID"), set.getString("State"), set.getString("Message")));
+					String requestor = set.getString("rUsers.UserName");
+					String supporter = set.getString("sUsers.UserName");
+					supporter = supporter != null ? String.format(" %s |", supporter) : "";
+					String message = set.getString("Message");
+					String state = set.getString("State");
+					String id = set.getString("TicketID");
+					String msg = String.format("ID: %s | %s | %s |%s \"%s\"", id, state, requestor, supporter, message);
+					if (msg.length() < 1000)
+						tickets.add(msg);
+					else
+					{
+						tickets.add(String.format("ID: %s | %s | %s |%s", id, state, requestor, supporter));
+						tickets.add(String.format("\"%s\"", set.getString("Message")));
+					}
 				}
 				if (tickets.size() > 0)
 					_bot.sendBulkMessages(client, "Offene Tickets:", tickets);
@@ -49,7 +63,7 @@ public class ListOpenTicktetsCommand extends BaseCommand
 		{
 			LOGGER.error("Couldn't connect to Databse.", e);
 		}
-		return null;
+		return CommandResult.NoErrors;
 	}
 
 	@Override

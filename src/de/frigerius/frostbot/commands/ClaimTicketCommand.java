@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import com.github.theholywaffle.teamspeak3.api.wrapper.Client;
 
+import de.frigerius.frostbot.ColoredText;
 import de.frigerius.frostbot.FrostBot;
 import de.frigerius.frostbot.UserDatabase;
 
@@ -50,10 +51,10 @@ public class ClaimTicketCommand extends BaseCommand
 					updt.setString(5, "Open");
 					if (updt.executeUpdate() != 1)
 					{
-						_bot.TS3API.sendPrivateMessage(client.getId(), "Das Ticket konnte leider nicht übernommen werden.");
-						return CommandResult.ArgumentError;
+						_bot.TS3API.sendPrivateMessage(client.getId(), ColoredText.red("Das Ticket konnte leider nicht übernommen werden."));
+						return CommandResult.NoErrors;
 					}
-					_bot.TS3API.sendPrivateMessage(client.getId(), "Du hast das Ticket erfolgreich übernommen.");
+					_bot.TS3API.sendPrivateMessage(client.getId(), ColoredText.green("Du hast das Ticket erfolgreich übernommen."));
 					return CommandResult.NoErrors;
 				}
 			} catch (SQLException ex)
