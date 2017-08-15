@@ -91,6 +91,31 @@ public class WvWEvents
 		return null;
 	}
 
+	public static int GetCurrentEventCount()
+	{
+		try (Connection con = FrostBot.getSQLConnection())
+		{
+			String sql = "SELECT Count(*) From Events WHERE Events.StartTime <= ? AND Events.EndTime > ? AND IsCanceled = ?";
+			try (PreparedStatement stmt = con.prepareStatement(sql))
+			{
+				Date now = new Date();
+				Timestamp tNow = new Timestamp(now.getTime());
+				stmt.setTimestamp(1, tNow);
+				stmt.setTimestamp(2, tNow);
+				stmt.setBoolean(3, false);
+				ResultSet result = stmt.executeQuery();
+				if (result.next())
+				{
+					return result.getInt(1);
+				}
+			}
+		} catch (SQLException e)
+		{
+			LOGGER.error("Couldn't connect to Databse.", e);
+		}
+		return 0;
+	}
+
 	private static String MakeEventString(ResultSet result)
 	{
 		try

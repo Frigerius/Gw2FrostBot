@@ -337,7 +337,7 @@ public class VerifyCommand extends RequestingBaseCommand
 				+ "Für die automatische Verifizierung, benötigst du deinen [url=https://wiki.guildwars2.com/wiki/API:API_key]API-KEY[/url]. Diesen kannst du über [url]https://account.arena.net/applications[/url] erstellen.\n"
 				+ "Anschließend kannst du den Key als Argument für den Befehl übergeben:\n"
 				+ ColoredText.green("Beispiel: !verify XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXXXXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX") + "\n"
-				+ "Durch übergabe deines Forums-Nutzernamen, erstellst du eine Anfragea auch dort verifiziert zu werden:\n"
+				+ "Durch Übergabe deines Forums-Nutzernamen, erstellst du eine Anfrage, auch dort verifiziert zu werden:\n"
 				+ ColoredText.green("Beispiel: !verify XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXXXXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX \"Mein Nutzername\"") + "\n"
 				+ ColoredText.red("Der automatische Prozess kann einige Sekunden in Anspruch nehmen!");
 	}

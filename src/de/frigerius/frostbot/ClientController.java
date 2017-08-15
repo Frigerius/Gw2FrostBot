@@ -1,5 +1,9 @@
 package de.frigerius.frostbot;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -28,41 +32,69 @@ public class ClientController
 		_bot = FrostBot.getInstance();
 	}
 
-	public void clientJoined(ClientJoinEvent e)
+	public void clientJoined(ClientJoinEvent clientEvent)
 	{
-		if (checkVerify(e))
+		if (checkVerify(clientEvent))
 		{
 			// Logger.info(String.format("Welcome message will be send to %s : %s.", e.getClientId(), e.getClientNickname()));
-			_bot.TS3API.sendPrivateMessage(e.getClientId(), makeVerifyMessage()).onFailure(result -> {
-				LOGGER.error(String.format("Failed to send message to %s.", e.getClientNickname()));
+			_bot.TS3API.sendPrivateMessage(clientEvent.getClientId(), makeVerifyMessage()).onFailure(result -> {
+				LOGGER.error(String.format("Failed to send message to %s.", clientEvent.getClientNickname()));
 			});
 		} else
 		{
-			if (!MyClient.isInServerGroup(e.getClientServerGroups(), BotSettings.ignoreMeGroup))
+			List<String> msgs = new LinkedList<String>();
+			if (!MyClient.isInServerGroup(clientEvent.getClientServerGroups(), BotSettings.ignoreMeGroup))
 			{
 				String msg = _bot.getNews().getMsg();
-				_bot.TS3API.sendPrivateMessage(e.getClientId(),
-						String.format("Willkommen auf dem TeamSpeak-Server von %s. Schreibe !help, wenn du eine Übersicht über deine Befehle erhalten möchtest.%s",
-								BotSettings.serverName, msg.equals("") ? "" : "\n" + msg))
-						.onFailure(result -> {
-							LOGGER.error(String.format("Failed to send message to %s.", e.getClientNickname()));
-						});
+				msgs.add(String.format("Willkommen auf dem TeamSpeak-Server von %s. Schreibe !help, wenn du eine Übersicht über deine Befehle erhalten möchtest.%s",
+						BotSettings.serverName, msg.equals("") ? "" : "\n" + msg));
 			}
+
+			if (MyClient.isInServerGroup(MyClient.makeStringToServerGroups(clientEvent.getClientServerGroups()), BotSettings.supporterGroups))
+			{
+				addSupporter(new MyClient(clientEvent));
+			}
+
+			int eventCount = WvWEvents.GetCurrentEventCount();
+			if (eventCount > 1)
+			{
+				msgs.add(String.format("Aktuell finden " + ColoredText.green("%d") + " Events statt. Schreibe " + ColoredText.green("!listevents") + " für mehr Details.",
+						eventCount));
+			} else if (eventCount == 1)
+			{
+				msgs.add(String.format("Aktuell findet " + ColoredText.green("ein") + " Event statt. Schreibe " + ColoredText.green("!listevents") + " für mehr Details.",
+						eventCount));
+			}
+
+			if (MyClient.HasGreaterOrEqualCmdPower(MyClient.makeStringToServerGroups(clientEvent.getClientServerGroups()), 45))
+			{
+				int count = checkTickets(clientEvent);
+				if (count > 0)
+					msgs.add(String.format("Anzahl offener Tickets: [color=green]%s[/color]", count));
+			}
+			_bot.sendBulkMessages(clientEvent.getClientId(), null, msgs);
 		}
-		if (MyClient.isInServerGroup(MyClient.makeStringToServerGroups(e.getClientServerGroups()), BotSettings.supporterGroups))
+	}
+
+	private int checkTickets(ClientJoinEvent clientEvent)
+	{
+		try (Connection con = FrostBot.getSQLConnection())
 		{
-			addSupporter(new MyClient(e));
+			String sql = "SELECT Count(*) FROM Tickets WHERE State = 'Open' OR (State = 'InProgress' AND SupporterUID = ?)";
+			try (PreparedStatement stmt = con.prepareStatement(sql))
+			{
+				stmt.setString(1, clientEvent.getUniqueClientIdentifier());
+				ResultSet result = stmt.executeQuery();
+				if (result.next())
+				{
+					return result.getInt(1);
+				}
+			}
+		} catch (SQLException e)
+		{
+			LOGGER.error("Error requesting open Tickets", e);
 		}
-		int eventCount = WvWEvents.GetCurrentEvents().size();
-		if (eventCount > 1)
-		{
-			_bot.TS3API.sendPrivateMessage(e.getClientId(),
-					String.format("Aktuell finden " + ColoredText.green("%d") + " Events statt. Schreibe " + ColoredText.green("!listevents") + " für mehr Details.", eventCount));
-		} else if (eventCount == 1)
-		{
-			_bot.TS3API.sendPrivateMessage(e.getClientId(),
-					String.format("Aktuell findet " + ColoredText.green("ein") + " Event statt. Schreibe " + ColoredText.green("!listevents") + " für mehr Details.", eventCount));
-		}
+		return 0;
 	}
 
 	public void clientLeft(ClientLeaveEvent e)
@@ -84,12 +116,12 @@ public class ClientController
 			_activeSupLock.unlock();
 		}
 	}
-	
+
 	public static boolean checkVerify(ClientJoinEvent clientEvent)
 	{
 		return checkVerify(MyClient.makeStringToServerGroups(clientEvent.getClientServerGroups()));
 	}
-	
+
 	private static boolean checkVerify(int[] groups)
 	{
 		return MyClient.isInServerGroup(groups, BotSettings.guestGroup) || MyClient.isInServerGroup(groups, BotSettings.removeGroupIdOnVerify);

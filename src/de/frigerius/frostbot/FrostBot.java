@@ -200,9 +200,18 @@ public class FrostBot
 
 	public void sendBulkMessages(Client c, String initmsg, List<String> msgs)
 	{
+		sendBulkMessages(c.getId(), initmsg, msgs);
+	}
+
+	public void sendBulkMessages(int id, String initmsg, List<String> msgs)
+	{
 		List<String> tmp = new LinkedList<String>();
-		tmp.add(initmsg);
-		int msgSize = tmp.get(0).length();
+		int msgSize = 0;
+		if (initmsg != null)
+		{
+			tmp.add(initmsg);
+			msgSize = tmp.get(0).length();
+		}
 		List<String> toSend = new LinkedList<String>();
 		for (String msg : msgs)
 		{
@@ -222,7 +231,7 @@ public class FrostBot
 		for (String msg : toSend)
 		{
 			if (msg.length() > 0)
-				TS3API.sendPrivateMessage(c.getId(), msg);
+				TS3API.sendPrivateMessage(id, msg);
 		}
 	}
 
