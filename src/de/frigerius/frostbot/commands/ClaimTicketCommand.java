@@ -5,7 +5,6 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Date;
-import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,10 +15,9 @@ import de.frigerius.frostbot.ColoredText;
 import de.frigerius.frostbot.FrostBot;
 import de.frigerius.frostbot.UserDatabase;
 
-public class ClaimTicketCommand extends BaseCommand
+public class ClaimTicketCommand extends CriticalTicketCommand
 {
 	private final Logger LOGGER = LoggerFactory.getLogger(ClaimTicketCommand.class);
-	private ReentrantLock _lock = new ReentrantLock();
 
 	public ClaimTicketCommand(int cmdPwr)
 	{
@@ -27,11 +25,10 @@ public class ClaimTicketCommand extends BaseCommand
 	}
 
 	@Override
-	protected CommandResult handleIntern(Client client, String[] args)
+	protected CommandResult sHandleIntern(Client client, String[] args)
 	{
 		if (args.length != 1)
 			return CommandResult.ArgumentError;
-		_lock.lock();
 		try
 		{
 			int ticketID = Integer.parseInt(args[0]);
@@ -65,9 +62,6 @@ public class ClaimTicketCommand extends BaseCommand
 		} catch (NumberFormatException ex)
 		{
 			return CommandResult.ArgumentError;
-		} finally
-		{
-			_lock.unlock();
 		}
 	}
 

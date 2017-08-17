@@ -4,8 +4,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,31 +12,39 @@ import com.github.theholywaffle.teamspeak3.api.wrapper.Client;
 
 import de.frigerius.frostbot.FrostBot;
 
-public class ListOpenTicktetsCommand extends BaseCommand
+public class TicketCommand extends BaseCommand
 {
-	private final Logger LOGGER = LoggerFactory.getLogger(ListOpenTicktetsCommand.class);
+	private final Logger LOGGER = LoggerFactory.getLogger(TicketCommand.class);
 
-	public ListOpenTicktetsCommand(int cmdPwr)
+	public TicketCommand(int cmdPwr)
 	{
-		super("listopentickets", cmdPwr);
+		super("ticket", cmdPwr);
 	}
 
 	@Override
 	protected CommandResult handleIntern(Client client, String[] args)
 	{
+		if (args.length != 1)
+			return CommandResult.ArgumentError;
+		int ticketID = 0;
+		try
+		{
+			ticketID = Integer.parseInt(args[0]);
+		} catch (NumberFormatException e)
+		{
+			return CommandResult.ArgumentError;
+		}
 		try (Connection con = FrostBot.getSQLConnection())
 		{
-			String sql = "SELECT TicketID, State, Message, rUsers.UserName, sUsers.UserName FROM Tickets LEFT JOIN Users rUsers ON Tickets.RequestorUID = rUsers.UserUID LEFT JOIN Users sUsers ON Tickets.SupporterUID = sUsers.UserUID WHERE State = ? OR (State = ? AND SupporterUID = ?)";
+			String sql = "SELECT TicketID, State, Message, rUsers.UserName, sUsers.UserName FROM Tickets LEFT JOIN Users rUsers ON Tickets.RequestorUID = rUsers.UserUID LEFT JOIN Users sUsers ON Tickets.SupporterUID = sUsers.UserUID WHERE TicketID = ?";
 
 			try (PreparedStatement sel = con.prepareStatement(sql))
 			{
-				sel.setString(1, "Open");
-				sel.setString(2, "InProgress");
-				sel.setString(3, client.getUniqueIdentifier());
+				sel.setInt(1, ticketID);
 				ResultSet set = sel.executeQuery();
-				List<String> tickets = new ArrayList<>();
-				while (set.next())
+				if (set.next())
 				{
+
 					String requestor = set.getString("rUsers.UserName");
 					String supporter = set.getString("sUsers.UserName");
 					supporter = supporter != null ? String.format(" %s |", supporter) : "";
@@ -47,17 +53,15 @@ public class ListOpenTicktetsCommand extends BaseCommand
 					String id = set.getString("TicketID");
 					String msg = String.format("ID: %s | %s | %s |%s \"%s\"", id, state, requestor, supporter, message);
 					if (msg.length() < 1000)
-						tickets.add(msg);
+						_bot.TS3API.sendPrivateMessage(client.getId(), msg);
 					else
 					{
-						tickets.add(String.format("ID: %s | %s | %s |%s", id, state, requestor, supporter));
-						tickets.add(String.format("\"%s\"", set.getString("Message")));
+						_bot.TS3API.sendPrivateMessage(client.getId(), String.format("ID: %s | %s | %s |%s", id, state, requestor, supporter));
+						_bot.TS3API.sendPrivateMessage(client.getId(), String.format("\"%s\"", set.getString("Message")));
 					}
-				}
-				if (tickets.size() > 0)
-					_bot.sendBulkMessages(client, "Offene Tickets:", tickets);
-				else
-					_bot.TS3API.sendPrivateMessage(client.getId(), "Aktuell gibt es keine offenen Tickets.");
+
+				} else
+					_bot.TS3API.sendPrivateMessage(client.getId(), "Das gesuchte Ticket existiert nicht.");
 			}
 		} catch (SQLException e)
 		{
@@ -69,13 +73,13 @@ public class ListOpenTicktetsCommand extends BaseCommand
 	@Override
 	public String getArguments()
 	{
-		return "";
+		return "[ID]";
 	}
 
 	@Override
 	public String getDescription()
 	{
-		return "Listed alle offenen Tickets auf.";
+		return "Zeigt das Ticket mit der angegebenen ID an.";
 	}
 
 	@Override

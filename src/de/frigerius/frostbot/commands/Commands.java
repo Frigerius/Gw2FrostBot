@@ -81,10 +81,13 @@ public class Commands
 		registerCommand(new AddGuildLeaderCommand(1));
 		registerCommand(new KickFromGuildCommand(1));
 		registerCommand(new AddGuildCommand(55));
-		//Ticket Commands
+		// Ticket Commands
+		registerCommand(new ListOpenTicketsCommand(50));
+		registerCommand(new TicketsCommand(50));
+		registerCommand(new TicketCommand(50));
 		registerCommand(new ClaimTicketCommand(50));
 		registerCommand(new CloseTicketCommand(50));
-		registerCommand(new ListOpenTicktetsCommand(50));
+		registerCommand(new ResetForumVerifyRequest(50));
 
 		// AFK
 		registerCommand(new AFKCommand(0));

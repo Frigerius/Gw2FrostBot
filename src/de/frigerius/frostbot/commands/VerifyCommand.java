@@ -49,7 +49,7 @@ public class VerifyCommand extends RequestingBaseCommand
 			try
 			{
 				boolean isVerified = isClientVerified(client);
-				boolean isForumRequest = args.length == 2;
+				boolean isForumRequest = args.length == 2 && args[1].length() > 0;
 				if (isVerified && !isForumRequest)
 				{
 					_bot.TS3API.sendPrivateMessage(client.getId(), ColoredText.green("Du bist bereits verifiziert."));
