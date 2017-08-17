@@ -4,6 +4,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.LinkedList;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +38,9 @@ public class TicketCommand extends BaseCommand
 		}
 		try (Connection con = FrostBot.getSQLConnection())
 		{
-			String sql = "SELECT TicketID, State, Message, rUsers.UserName, sUsers.UserName FROM Tickets LEFT JOIN Users rUsers ON Tickets.RequestorUID = rUsers.UserUID LEFT JOIN Users sUsers ON Tickets.SupporterUID = sUsers.UserUID WHERE TicketID = ?";
+			String sql = "SELECT TicketID, State, Message, rUsers.UserName, sUsers.UserName , Comment "
+					+ "FROM Tickets LEFT JOIN Users rUsers ON Tickets.RequestorUID = rUsers.UserUID LEFT JOIN Users sUsers ON Tickets.SupporterUID = sUsers.UserUID "
+					+ "WHERE TicketID = ?";
 
 			try (PreparedStatement sel = con.prepareStatement(sql))
 			{
@@ -47,19 +51,17 @@ public class TicketCommand extends BaseCommand
 
 					String requestor = set.getString("rUsers.UserName");
 					String supporter = set.getString("sUsers.UserName");
-					supporter = supporter != null ? String.format(" %s |", supporter) : "";
+					supporter = supporter != null ? String.format("\nVerantwortlicher: %s", supporter) : "";
 					String message = set.getString("Message");
 					String state = set.getString("State");
 					String id = set.getString("TicketID");
-					String msg = String.format("ID: %s | %s | %s |%s \"%s\"", id, state, requestor, supporter, message);
-					if (msg.length() < 1000)
-						_bot.TS3API.sendPrivateMessage(client.getId(), msg);
-					else
-					{
-						_bot.TS3API.sendPrivateMessage(client.getId(), String.format("ID: %s | %s | %s |%s", id, state, requestor, supporter));
-						_bot.TS3API.sendPrivateMessage(client.getId(), String.format("\"%s\"", set.getString("Message")));
-					}
-
+					List<String> texts = new LinkedList<String>();
+					texts.add(String.format("Status: %s\nVerfasser: %s%s", state, requestor, supporter));
+					texts.add(String.format("Inhalt: \"%s\"", message));
+					String comment = set.getString("Comment");
+					if (comment != null && comment.length() > 0)
+						texts.add(String.format("Kommentar: \"%s\"", comment));
+					_bot.sendBulkMessages(client.getId(), String.format("Ticket: %s", id), texts);
 				} else
 					_bot.TS3API.sendPrivateMessage(client.getId(), "Das gesuchte Ticket existiert nicht.");
 			}

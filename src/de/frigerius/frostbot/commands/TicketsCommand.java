@@ -29,41 +29,43 @@ public class TicketsCommand extends BaseCommand
 		try (Connection con = FrostBot.getSQLConnection())
 		{
 			String sql = "";
-			String filter[] = new String[args.length];
+			String filter[] = null;
 			if (args.length == 1)
 			{
+				filter = new String[args[0].length()];
+				char arg[] = args[0].toCharArray();
 				for (int i = 0; i < filter.length; i++)
 				{
-					switch (args[i])
+					switch (arg[i])
 					{
-					case "-o":
+					case 'o':
 						filter[i] = "Open";
 						break;
-					case "-c":
+					case 'c':
 						filter[i] = "Closed";
 						break;
-					case "-p":
+					case 'p':
 						filter[i] = "InProgress";
 						break;
-					case "-r":
+					case 'r':
 						filter[i] = "Rejected";
 						break;
+					default:
+						return CommandResult.ArgumentError;
 					}
 				}
 
-				sql = "SELECT TicketID, State, Message, rUsers.UserName, sUsers.UserName "
-						+ "FROM Tickets LEFT JOIN Users rUsers ON Tickets.RequestorUID = rUsers.UserUID LEFT JOIN Users sUsers ON Tickets.SupporterUID = sUsers.UserUID "
-						+ "WHERE State = ?";
+				sql = "SELECT TicketID, State, Message FROM Tickets WHERE State = ?";
 				for (int i = 1; i < filter.length; i++)
 				{
 					sql += " OR State = ?";
 				}
 			} else
-				sql = "SELECT TicketID, State, Message, rUsers.UserName, sUsers.UserName FROM Tickets LEFT JOIN Users rUsers ON Tickets.RequestorUID = rUsers.UserUID LEFT JOIN Users sUsers ON Tickets.SupporterUID = sUsers.UserUID";
+				sql = "SELECT TicketID, State, Message FROM Tickets";
 
 			try (PreparedStatement sel = con.prepareStatement(sql))
 			{
-				if (filter.length > 0)
+				if (filter != null && filter.length > 0)
 				{
 					for (int i = 0; i < filter.length; i++)
 					{
@@ -74,18 +76,15 @@ public class TicketsCommand extends BaseCommand
 				List<String> tickets = new ArrayList<>();
 				while (set.next())
 				{
-					String requestor = set.getString("rUsers.UserName");
-					String supporter = set.getString("sUsers.UserName");
-					supporter = supporter != null ? String.format(" %s |", supporter) : "";
-					String message = set.getString("Message");
-					String state = set.getString("State");
 					String id = set.getString("TicketID");
-					String msg = String.format("ID: %s | %s | %s |%s \"%s\"", id, state, requestor, supporter, message);
+					String state = set.getString("State");
+					String message = set.getString("Message");
+					String msg = String.format("ID: %s | %s | \"%s\"", id, state, message);
 					if (msg.length() < 1000)
 						tickets.add(msg);
 					else
 					{
-						tickets.add(String.format("ID: %s | %s | %s |%s", id, state, requestor, supporter));
+						tickets.add(String.format("ID: %s | %s", id, state));
 						tickets.add(String.format("\"%s\"", set.getString("Message")));
 					}
 				}
@@ -104,7 +103,7 @@ public class TicketsCommand extends BaseCommand
 	@Override
 	public String getArguments()
 	{
-		return "[(Filter1)] [(Filter2)] ...";
+		return "[(Filter)]";
 	}
 
 	@Override
@@ -116,7 +115,7 @@ public class TicketsCommand extends BaseCommand
 	@Override
 	protected String getDetails()
 	{
-		return "-o = Open\n-c = Closed\n-p = InProgress\n-r = Rejected";
+		return "o = Open\nc = Closed\np = InProgress\nr = Rejected\nBeispiel: !tickets op\n!tickets opcr ist äquivalent zu !tickets";
 	}
 
 }

@@ -28,29 +28,24 @@ public class ListOpenTicketsCommand extends BaseCommand
 	{
 		try (Connection con = FrostBot.getSQLConnection())
 		{
-			String sql = "SELECT TicketID, State, Message, rUsers.UserName, sUsers.UserName FROM Tickets LEFT JOIN Users rUsers ON Tickets.RequestorUID = rUsers.UserUID LEFT JOIN Users sUsers ON Tickets.SupporterUID = sUsers.UserUID WHERE State = ? OR (State = ? AND SupporterUID = ?)";
+			String sql = "SELECT TicketID, State, Message FROM Tickets WHERE State = 'Open' OR (State = 'InProgress' AND SupporterUID = ?)";
 
 			try (PreparedStatement sel = con.prepareStatement(sql))
 			{
-				sel.setString(1, "Open");
-				sel.setString(2, "InProgress");
-				sel.setString(3, client.getUniqueIdentifier());
+				sel.setString(1, client.getUniqueIdentifier());
 				ResultSet set = sel.executeQuery();
 				List<String> tickets = new ArrayList<>();
 				while (set.next())
 				{
-					String requestor = set.getString("rUsers.UserName");
-					String supporter = set.getString("sUsers.UserName");
-					supporter = supporter != null ? String.format(" %s |", supporter) : "";
-					String message = set.getString("Message");
-					String state = set.getString("State");
 					String id = set.getString("TicketID");
-					String msg = String.format("ID: %s | %s | %s |%s \"%s\"", id, state, requestor, supporter, message);
+					String state = set.getString("State");
+					String message = set.getString("Message");
+					String msg = String.format("ID: %s | %s | \"%s\"", id, state, message);
 					if (msg.length() < 1000)
 						tickets.add(msg);
 					else
 					{
-						tickets.add(String.format("ID: %s | %s | %s |%s", id, state, requestor, supporter));
+						tickets.add(String.format("ID: %s | %s", id, state));
 						tickets.add(String.format("\"%s\"", set.getString("Message")));
 					}
 				}
