@@ -89,9 +89,20 @@ public class TicketsCommand extends BaseCommand
 					}
 				}
 				if (tickets.size() > 0)
-					_bot.sendBulkMessages(client, "Tickets:", tickets);
-				else
-					_bot.TS3API.sendPrivateMessage(client.getId(), "Es konnten keine Tickets gefunden werden.");
+				{
+					if (client != null)
+						_bot.sendBulkMessages(client, "Tickets:", tickets);
+					else
+						LOGGER.info(String.format("Tickets: %s\n", String.join("\n", tickets)));
+
+				} else
+				{
+					if (client != null)
+						_bot.TS3API.sendPrivateMessage(client.getId(), "Es konnten keine Tickets gefunden werden.");
+					else
+						LOGGER.info("Es konnten keine Tickets gefunden werden.");
+
+				}
 			}
 		} catch (SQLException e)
 		{

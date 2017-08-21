@@ -61,9 +61,17 @@ public class TicketCommand extends BaseCommand
 					String comment = set.getString("Comment");
 					if (comment != null && comment.length() > 0)
 						texts.add(String.format("Kommentar: \"%s\"", comment));
-					_bot.sendBulkMessages(client.getId(), String.format("Ticket: %s", id), texts);
+					if (client != null)
+						_bot.sendBulkMessages(client.getId(), String.format("Ticket: %s", id), texts);
+					else
+						LOGGER.info(String.format("Ticket: %s\n%s", id, String.join("\n", texts)));
 				} else
-					_bot.TS3API.sendPrivateMessage(client.getId(), "Das gesuchte Ticket existiert nicht.");
+				{
+					if (client != null)
+						_bot.TS3API.sendPrivateMessage(client.getId(), "Das gesuchte Ticket existiert nicht.");
+					else
+						LOGGER.info("Das gesuchte Ticket existiert nicht.");
+				}
 			}
 		} catch (SQLException e)
 		{

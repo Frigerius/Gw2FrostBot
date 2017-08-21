@@ -12,14 +12,13 @@ import org.slf4j.LoggerFactory;
 
 import com.github.theholywaffle.teamspeak3.api.wrapper.Client;
 
-import main.java.de.frigerius.frostbot.ColoredText;
 import main.java.de.frigerius.frostbot.FrostBot;
 
-public class ResetForumVerifyRequest extends CriticalTicketCommand
+public class OfflineResetForumVerifyCommand extends CriticalTicketCommand
 {
-	private final Logger LOGGER = LoggerFactory.getLogger(ResetForumVerifyRequest.class);
+	private final Logger LOGGER = LoggerFactory.getLogger(OfflineResetForumVerifyCommand.class);
 
-	public ResetForumVerifyRequest(int cmdPwr)
+	public OfflineResetForumVerifyCommand(int cmdPwr)
 	{
 		super("resetreq", cmdPwr);
 	}
@@ -37,26 +36,22 @@ public class ResetForumVerifyRequest extends CriticalTicketCommand
 			{
 				if (cancelRequest(con, ticketID))
 				{
-					String sql = "UPDATE Tickets SET State = 'Rejected', SupporterUID = ?, Comment = ? WHERE TicketID = ? AND (State = 'Open' OR SupporterUID = ?)";
+					String sql = "UPDATE Tickets SET State = 'Rejected', Comment = ? WHERE TicketID = ?";
 					try (PreparedStatement stmt = con.prepareStatement(sql))
 					{
-						stmt.setString(1, client.getUniqueIdentifier());
-						stmt.setString(2, comment);
-						stmt.setInt(3, ticketID);
-						stmt.setString(4, client.getUniqueIdentifier());
+						stmt.setString(1, comment);
+						stmt.setInt(2, ticketID);
 						if (stmt.executeUpdate() == 1)
 						{
-							_bot.TS3API.sendPrivateMessage(client.getId(), ColoredText.green("Das Ticket wurde erfolgreich angepasst."));
+							LOGGER.info("Das Ticket wurde erfolgreich angepasst.");
 						} else
 						{
-							_bot.TS3API.sendPrivateMessage(client.getId(),
-									ColoredText.red("Fehler beim Versuch das Ticket zu bearbeiten! Stellen sie sicher, dass ihre Eingabe korrekt ist."));
+							LOGGER.error("Fehler beim Versuch das Ticket zu bearbeiten! Stellen sie sicher, dass ihre Eingabe korrekt ist.");
 						}
 					}
 				} else
 				{
-					_bot.TS3API.sendPrivateMessage(client.getId(),
-							ColoredText.red("Fehler! Fehler! Fehler! Hilfe! Feuer! Fehler! Argh! Bist du sicher, dass deine Eingabe korrekt ist?"));
+					LOGGER.error("Fehler! Fehler! Fehler! Hilfe! Feuer! Fehler! Argh! Bist du sicher, dass deine Eingabe korrekt ist?");
 				}
 			} catch (SQLException e)
 			{

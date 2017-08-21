@@ -108,6 +108,9 @@ public class Commands
 		registerConsoleCommand(new RefreshNewsCommand(0));
 		registerConsoleCommand(new ListGuildsCommand(0));
 		registerConsoleCommand(new DeleteGuildCommand(0));
+		registerConsoleCommand(new TicketsCommand(0));
+		registerConsoleCommand(new TicketCommand(0));
+		registerConsoleCommand(new OfflineResetForumVerifyCommand(0));
 	}
 
 	public String getDetailedDescription(Client c, String cmd)

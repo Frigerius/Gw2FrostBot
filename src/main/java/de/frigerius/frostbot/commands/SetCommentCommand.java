@@ -17,7 +17,7 @@ import main.java.de.frigerius.frostbot.UserDatabase;
 
 public class SetCommentCommand extends CriticalTicketCommand
 {
-	private final Logger LOGGER = LoggerFactory.getLogger(CloseTicketCommand.class);
+	private final Logger LOGGER = LoggerFactory.getLogger(SetCommentCommand.class);
 
 	public SetCommentCommand(int cmdPwr)
 	{
