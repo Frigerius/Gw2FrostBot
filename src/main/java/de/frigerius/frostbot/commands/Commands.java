@@ -87,6 +87,7 @@ public class Commands
 		registerCommand(new TicketCommand(50));
 		registerCommand(new ClaimTicketCommand(50));
 		registerCommand(new CloseTicketCommand(50));
+		registerCommand(new SetCommentCommand(50));
 		registerCommand(new ResetForumVerifyRequest(50));
 
 		// AFK
