@@ -93,7 +93,7 @@ public class TicketsCommand extends BaseCommand
 					if (client != null)
 						_bot.sendBulkMessages(client, "Tickets:", tickets);
 					else
-						LOGGER.info(String.format("Tickets: %s\n", String.join("\n", tickets)));
+						LOGGER.info(String.format("Tickets:\n%s", String.join("\n", tickets)));
 
 				} else
 				{
