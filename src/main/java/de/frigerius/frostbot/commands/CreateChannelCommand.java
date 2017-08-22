@@ -9,15 +9,18 @@ import com.github.theholywaffle.teamspeak3.api.wrapper.Client;
 
 import main.java.de.frigerius.frostbot.AfkMover;
 import main.java.de.frigerius.frostbot.BotSettings;
+import main.java.de.frigerius.frostbot.ChannelController;
 
 public class CreateChannelCommand extends BaseCommand
 {
 	private AfkMover _afkMover;
+	private ChannelController _channelController;
 
 	public CreateChannelCommand(int cmdPwr)
 	{
 		super("createchannel", cmdPwr);
 		_afkMover = _bot.getAfkMover();
+		_channelController = _bot.getChannelController();
 	}
 
 	@Override

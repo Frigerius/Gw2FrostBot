@@ -156,6 +156,7 @@ public class Events
 					_afkMover.onChannelMoved(e.getChannelParentId(), e.getChannelId());
 				if (_channelController.isEventChannel(e.getChannelParentId()))
 				{
+					_channelController.setDefaultPermissions(e.getChannelId());
 					_channelController.addEventChannel(e.getChannelId());
 				} else
 					_channelController.removeEventChannel(e.getChannelId());

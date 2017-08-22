@@ -46,11 +46,11 @@ public class ChannelController
 	public void refreshChannelList()
 	{
 		_bot.TS3API.getChannels().onSuccess(channels -> {
-			refreshChanelList(channels);
+			refreshChannelList(channels);
 		});
 	}
 
-	public void refreshChanelList(List<Channel> channels)
+	public void refreshChannelList(List<Channel> channels)
 	{
 		_lock.lock();
 		_eventChannel.clear();

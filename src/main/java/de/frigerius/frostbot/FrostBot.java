@@ -142,7 +142,7 @@ public class FrostBot
 				{
 					_afkMover.refreshAFKChannelList(channels);
 				}
-				_channelController.refreshChanelList(channels);
+				_channelController.refreshChannelList(channels);
 			});
 			Runtime.getRuntime().addShutdownHook(new Thread()
 			{
