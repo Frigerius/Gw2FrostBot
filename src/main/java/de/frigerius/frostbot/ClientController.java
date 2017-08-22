@@ -172,7 +172,8 @@ public class ClientController
 				}
 			}
 		}
-		afkMover.refreshAfks(stillAFK);
+		if (afkMover != null)
+			afkMover.refreshAfks(stillAFK);
 		_needsSupport.clear();
 		for (MyClient client : needsHelp)
 		{

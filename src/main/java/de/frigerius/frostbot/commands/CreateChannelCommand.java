@@ -9,18 +9,15 @@ import com.github.theholywaffle.teamspeak3.api.wrapper.Client;
 
 import main.java.de.frigerius.frostbot.AfkMover;
 import main.java.de.frigerius.frostbot.BotSettings;
-import main.java.de.frigerius.frostbot.ChannelController;
 
 public class CreateChannelCommand extends BaseCommand
 {
 	private AfkMover _afkMover;
-	private ChannelController _channelController;
 
 	public CreateChannelCommand(int cmdPwr)
 	{
 		super("createchannel", cmdPwr);
 		_afkMover = _bot.getAfkMover();
-		_channelController = ChannelController.getInstance();
 	}
 
 	@Override
@@ -58,9 +55,9 @@ public class CreateChannelCommand extends BaseCommand
 					{
 						_bot.TS3API.moveChannel(id, BotSettings.eventParentChannelId);
 					}
-					_bot.TS3API.sendPrivateMessage(c.getId(), "Ich habe den Channel für dich erstellt.");
+					if (c != null)
+						_bot.TS3API.sendPrivateMessage(c.getId(), "Ich habe den Channel für dich erstellt.");
 				});
-				_channelController.setDefaultPermissions(id);
 			});
 		}
 		return CommandResult.NoErrors;

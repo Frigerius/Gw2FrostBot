@@ -11,7 +11,7 @@ public class SetupChannelCommand extends BaseCommand
 	public SetupChannelCommand(int cmdPwr)
 	{
 		super("setupchannel", cmdPwr);
-		_channelController = ChannelController.getInstance();
+		_channelController = _bot.getChannelController();
 	}
 
 	@Override

@@ -40,6 +40,7 @@ public class FrostBot
 	private Console _console;
 	private AfkMover _afkMover;
 	private GuildManager _guildManager;
+	private ChannelController _channelController;
 
 	private News _news;
 	private final HashSet<Integer> _userRanks = new HashSet<>();
@@ -58,6 +59,7 @@ public class FrostBot
 		_connection = new MyConnection(() -> onConnected());
 		_console = new Console();
 		_guildManager = new GuildManager();
+		_channelController = new ChannelController();
 		_news = new News("news.txt");
 	}
 
@@ -101,6 +103,11 @@ public class FrostBot
 		return _news;
 	}
 
+	public ChannelController getChannelController()
+	{
+		return _channelController;
+	}
+
 	// Methos
 
 	public boolean readConfig()
@@ -130,10 +137,13 @@ public class FrostBot
 				_tasks.AddTask(_afkMover);
 			}
 			_connection.init();
-			if (BotSettings.isAFKMoverEnabled)
-			{
-				_afkMover.refreshAFKChannelList();
-			}
+			TS3API.getChannels().onSuccess(channels -> {
+				if (BotSettings.isAFKMoverEnabled)
+				{
+					_afkMover.refreshAFKChannelList(channels);
+				}
+				_channelController.refreshChanelList(channels);
+			});
 			Runtime.getRuntime().addShutdownHook(new Thread()
 			{
 				@Override

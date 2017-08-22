@@ -36,7 +36,6 @@ public class Events
 	{
 		_bot = FrostBot.getInstance();
 		_afkMover = _bot.getAfkMover();
-		_channelController = ChannelController.getInstance();
 	}
 
 	public void init()
@@ -44,6 +43,7 @@ public class Events
 		if (_init)
 			return;
 		_init = true;
+		_channelController = _bot.getChannelController();
 		_clientController = _bot.getClientController();
 		_commands = _bot.getCommands();
 		_helpVerifyCommand = (HelpVerify) _commands.commands.get("!helpverify");
@@ -134,9 +134,9 @@ public class Events
 			public void onChannelCreate(final ChannelCreateEvent e)
 			{
 				_bot.TS3API.getChannelInfo(e.getChannelId()).onSuccess(result -> {
-					if (result.getParentChannelId() == BotSettings.eventParentChannelId)
+					if (_channelController.isEventChannel(result.getParentChannelId()))
 					{
-						_channelController.setDefaultPermissions(e.getChannelId());
+						_channelController.setDefaultPermissions(result);
 					}
 					if (_afkMover != null)
 						_afkMover.addSpectateChannel(result.getParentChannelId(), e.getChannelId());
@@ -147,12 +147,18 @@ public class Events
 			{
 				if (_afkMover != null)
 					_afkMover.removeSpecateChannel(e.getChannelId());
+				_channelController.removeEventChannel(e.getChannelId());
 			}
 
 			public void onChannelMoved(final ChannelMovedEvent e)
 			{
 				if (_afkMover != null)
 					_afkMover.onChannelMoved(e.getChannelParentId(), e.getChannelId());
+				if (_channelController.isEventChannel(e.getChannelParentId()))
+				{
+					_channelController.addEventChannel(e.getChannelId());
+				} else
+					_channelController.removeEventChannel(e.getChannelId());
 			}
 
 			public void onChannelPasswordChanged(final ChannelPasswordChangedEvent e)

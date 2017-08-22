@@ -118,27 +118,32 @@ public class AfkMover extends ClientService
 
 	public void refreshAFKChannelList()
 	{
+		_bot.TS3API.getChannels().onSuccess(channels -> {
+			refreshAFKChannelList(channels);
+		});
+	}
+
+	public void refreshAFKChannelList(List<Channel> channels)
+	{
+		_lock.lock();
 		_spectateChannelForAfks.clear();
 		_spectateChannelForAfks.add(BotSettings.supporterChannelID);
-		_bot.TS3API.getChannels().onSuccess(channels -> {
-			_lock.lock();
-			try
+		try
+		{
+			for (int i : BotSettings.afkSpectateChannelIDs)
 			{
-				for (int i : BotSettings.afkSpectateChannelIDs)
-				{
-					_spectateChannelForAfks.add(i);
-				}
-				for (Channel channel : channels)
-				{
-					int PID = channel.getParentChannelId();
-					if (_spectateChannelForAfks.contains(PID))
-						_spectateChannelForAfks.add(channel.getId());
-				}
-			} finally
-			{
-				_lock.unlock();
+				_spectateChannelForAfks.add(i);
 			}
-		});
+			for (Channel channel : channels)
+			{
+				int PID = channel.getParentChannelId();
+				if (_spectateChannelForAfks.contains(PID))
+					_spectateChannelForAfks.add(channel.getId());
+			}
+		} finally
+		{
+			_lock.unlock();
+		}
 	}
 
 	public void addSpectateChannel(int parentId, int channelId)
