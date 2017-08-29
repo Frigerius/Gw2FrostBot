@@ -34,7 +34,7 @@ public class AFKCommand extends BaseCommand
 				}
 			} catch (NumberFormatException ex)
 			{
-
+				return CommandResult.ArgumentError;
 			}
 		}
 		if (c.getChannelId() != BotSettings.afkChannelIDLong)

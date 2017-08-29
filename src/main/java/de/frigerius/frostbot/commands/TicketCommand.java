@@ -76,6 +76,7 @@ public class TicketCommand extends BaseCommand
 		} catch (SQLException e)
 		{
 			LOGGER.error("Couldn't connect to Databse.", e);
+			return CommandResult.Error;
 		}
 		return CommandResult.NoErrors;
 	}

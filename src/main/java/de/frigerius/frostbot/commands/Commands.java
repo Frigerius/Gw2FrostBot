@@ -26,6 +26,14 @@ public class Commands
 	private final Pattern _pattern = Pattern.compile("(^(?<command>!([a-z]*(?= |$)))|((?<=[ ])((\"(?<param>(((?!\").)*))\")|(?<param2>(((?!\"|[ ]).)*)))(?=[ |\"]|$)))");
 	private final Pattern _consolePattern = Pattern.compile("(^(?<command>([a-z]*(?= |$)))|((?<=[ ])((\"(?<param>(((?!\").)*))\")|(?<param2>(((?!\"|[ ]).)*)))(?=[ |\"]|$)))");
 	private final Logger LOGGER = LoggerFactory.getLogger(Commands.class);
+	public static final int AdminLevel = 100;
+	public static final int Sub1AdminLevel = 55;
+	public static final int Sub2AdminLevel = 50;
+	public static final int Sub3AdminLevel = 40;
+	public static final int SupporterLevel = 20;
+	public static final int SubSupporterLevel = 15;
+	public static final int UserLevel = 10;
+	public static final int EveryoneLevel = 0;
 	private FrostBot _bot;
 
 	public Commands()
@@ -54,48 +62,51 @@ public class Commands
 
 	private void createDefaultCommands()
 	{
-		registerCommand(new HelpCommand(0, this));
-		registerCommand(new InfoCommand("homepage", 0, "[url]" + BotSettings.homepage + "[/url]", "Gibt den Link zur Hompage an."));
+		registerCommand(new HelpCommand(EveryoneLevel, this));
+		registerCommand(new InfoCommand("homepage", EveryoneLevel, "[url]" + BotSettings.homepage + "[/url]", "Gibt den Link zur Hompage an."));
 		// Verifizierung
-		registerCommand(new VerifyCommand(0));
-		registerCommand(new ShowVerifier(20));
-		registerCommand(new HelpVerify(20));
-		registerCommand(new PauseVerifyCommand(20));
-		registerCommand(new ResumeVerifyCommand(20));
+		registerCommand(new VerifyCommand(EveryoneLevel));
+		registerCommand(new ShowVerifier(SupporterLevel));
+		registerCommand(new HelpVerify(SupporterLevel));
+		registerCommand(new PauseVerifyCommand(SupporterLevel));
+		registerCommand(new ResumeVerifyCommand(SupporterLevel));
 		// Events
-		registerCommand(new ListEventsCommand(0));
-		registerCommand(new JoinEventCommand(10));
-		registerCommand(new AddEventCommand(15));
-		registerCommand(new DeleteEventCommand(15));
-		registerCommand(new SetChannelRecording(15));
+		registerCommand(new ListEventsCommand(EveryoneLevel));
+		registerCommand(new JoinEventCommand(UserLevel));
+		registerCommand(new AddEventCommand(SubSupporterLevel));
+		registerCommand(new DeleteEventCommand(SubSupporterLevel));
+		registerCommand(new SetChannelRecording(SubSupporterLevel));
+		registerCommand(new RemoveRecCommand(SubSupporterLevel));
 		// Channel
-		registerCommand(new CreateChannelCommand(15));
-		registerCommand(new SetupChannelCommand(15));
+		registerCommand(new CreateChannelCommand(SubSupporterLevel));
+		registerCommand(new SetupChannelCommand(SubSupporterLevel));
 		// Guild Commands
-		registerCommand(new ListGuildsCommand(10));
-		registerCommand(new JoinGuildCommand(10));
+		registerCommand(new ListGuildsCommand(UserLevel));
+		registerCommand(new JoinGuildCommand(UserLevel));
 		registerCommand(new LeaveGuildCommand(11));
 		registerCommand(new ListMembersCommand(1));
 		registerCommand(new AddMemberCommand(1));
 		registerCommand(new AddMembersCommand(1));
 		registerCommand(new AddGuildLeaderCommand(1));
 		registerCommand(new KickFromGuildCommand(1));
-		registerCommand(new AddGuildCommand(55));
+		registerCommand(new AddGuildCommand(Sub1AdminLevel));
 		// Ticket Commands
-		registerCommand(new ListOpenTicketsCommand(50));
-		registerCommand(new TicketsCommand(50));
-		registerCommand(new TicketCommand(50));
-		registerCommand(new ClaimTicketCommand(50));
-		registerCommand(new CloseTicketCommand(50));
-		registerCommand(new SetCommentCommand(50));
-		registerCommand(new ResetForumVerifyRequest(50));
+		registerCommand(new ListOpenTicketsCommand(Sub2AdminLevel));
+		registerCommand(new TicketsCommand(Sub2AdminLevel));
+		registerCommand(new TicketCommand(Sub2AdminLevel));
+		registerCommand(new ClaimTicketCommand(Sub2AdminLevel));
+		registerCommand(new CloseTicketCommand(Sub2AdminLevel));
+		registerCommand(new SetCommentCommand(Sub2AdminLevel));
+		registerCommand(new ResetForumVerifyRequest(Sub2AdminLevel));
+		registerCommand(new BlockRecordChannel(Sub1AdminLevel));
+		registerCommand(new RemBlockCommand(Sub1AdminLevel));
 
 		// AFK
-		registerCommand(new AFKCommand(0));
-		registerCommand(new BackCommand(0));
+		registerCommand(new AFKCommand(EveryoneLevel));
+		registerCommand(new BackCommand(EveryoneLevel));
 		// Mute Bot
-		registerCommand(new ShutUpCommand(10));
-		registerCommand(new INeedUCommand(10));
+		registerCommand(new ShutUpCommand(UserLevel));
+		registerCommand(new INeedUCommand(UserLevel));
 
 		// Console Commands
 		registerConsoleCommand(new HelpCommand(0, this));

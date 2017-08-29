@@ -1,15 +1,27 @@
 package main.java.de.frigerius.frostbot.commands;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
+import com.github.theholywaffle.teamspeak3.api.wrapper.ChannelInfo;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Client;
+import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException;
 
 import main.java.de.frigerius.frostbot.BotSettings;
+import main.java.de.frigerius.frostbot.ColoredText;
+import main.java.de.frigerius.frostbot.FrostBot;
 
 public class SetChannelRecording extends BaseCommand
 {
+
+	private final Logger LOGGER = LoggerFactory.getLogger(SetChannelRecording.class);
 
 	public SetChannelRecording(int cmdPwr)
 	{
@@ -19,9 +31,45 @@ public class SetChannelRecording extends BaseCommand
 	@Override
 	protected CommandResult handleIntern(Client client, String[] args)
 	{
-		Map<ChannelProperty, String> properties = new HashMap<ChannelProperty, String>();
-		properties.put(ChannelProperty.CHANNEL_ICON_ID, Long.toString(BotSettings.recordIconId));
-		_bot.TS3API.editChannel(client.getChannelId(), properties);
+		ChannelInfo channel;
+		try
+		{
+			channel = _bot.TS3API.getChannelInfo(client.getChannelId()).get();
+		} catch (InterruptedException e1)
+		{
+			return CommandResult.Error;
+		}
+		if (channel.getIconId() == 0)
+		{
+			try (Connection con = FrostBot.getSQLConnection())
+			{
+				String sql = "INSERT INTO RecChannel (ChannelID, UserUID, ChannelState) VALUES (?,?,'Recording')";
+				try (PreparedStatement stmt = con.prepareStatement(sql))
+				{
+					stmt.setInt(1, client.getChannelId());
+					stmt.setString(2, client.getUniqueIdentifier());
+					int result = stmt.executeUpdate();
+					if (result == 1)
+					{
+						Map<ChannelProperty, String> properties = new HashMap<ChannelProperty, String>();
+						properties.put(ChannelProperty.CHANNEL_ICON_ID, Long.toString(BotSettings.recordIconId));
+						_bot.TS3API.editChannel(client.getChannelId(), properties);
+					}
+				}
+
+			} catch (MySQLIntegrityConstraintViolationException e)
+			{
+				_bot.TS3API.sendPrivateMessage(client.getId(), ColoredText.red("Dieser Channel kann von dir nicht modifiziert werden."));
+			} catch (SQLException e)
+			{
+				LOGGER.error("SQL Error", e);
+			}
+
+		} else
+		{
+			_bot.TS3API.sendPrivateMessage(client.getId(), ColoredText.red("Du kannst Channelsymbole nicht überschreiben."));
+		}
+
 		return CommandResult.NoErrors;
 	}
 

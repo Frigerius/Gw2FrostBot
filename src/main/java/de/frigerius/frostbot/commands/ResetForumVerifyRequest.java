@@ -61,6 +61,7 @@ public class ResetForumVerifyRequest extends CriticalTicketCommand
 			} catch (SQLException e)
 			{
 				LOGGER.error("SQL Error", e);
+				return CommandResult.Error;
 			}
 		} catch (NumberFormatException ex)
 		{
