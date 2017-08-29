@@ -225,7 +225,7 @@ public class FrostBot
 		List<String> toSend = new LinkedList<String>();
 		for (String msg : msgs)
 		{
-			if (msgSize + msg.length() < 1000)
+			if (msgSize + msg.length() + (tmp.size() * 2) < 1024)
 			{
 				msgSize += msg.length();
 			} else
