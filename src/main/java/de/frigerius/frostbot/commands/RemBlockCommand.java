@@ -11,6 +11,7 @@ import com.github.theholywaffle.teamspeak3.api.wrapper.Client;
 
 import main.java.de.frigerius.frostbot.ColoredText;
 import main.java.de.frigerius.frostbot.FrostBot;
+import main.java.de.frigerius.frostbot.UserDatabase;
 
 public class RemBlockCommand extends BaseCommand
 {
@@ -26,6 +27,7 @@ public class RemBlockCommand extends BaseCommand
 	{
 		try (Connection con = FrostBot.getSQLConnection())
 		{
+			UserDatabase.AddUser(con, client.getUniqueIdentifier(), client.getNickname());
 			String sql = "DELETE FROM RecChannel WHERE ChannelID = ? AND ChannelState = 'BlockRec'";
 			try (PreparedStatement stmt = con.prepareStatement(sql))
 			{

@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Client;
 
 import main.java.de.frigerius.frostbot.FrostBot;
-import main.java.de.frigerius.frostbot.commands.BaseCommand.CommandResult;
 
 public class OfflineResetForumVerifyCommand extends CriticalTicketCommand
 {

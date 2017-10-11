@@ -26,12 +26,12 @@ public class Commands
 	private final Pattern _pattern = Pattern.compile("(^(?<command>!([a-z]*(?= |$)))|((?<=[ ])((\"(?<param>(((?!\").)*))\")|(?<param2>(((?!\"|[ ]).)*)))(?=[ |\"]|$)))");
 	private final Pattern _consolePattern = Pattern.compile("(^(?<command>([a-z]*(?= |$)))|((?<=[ ])((\"(?<param>(((?!\").)*))\")|(?<param2>(((?!\"|[ ]).)*)))(?=[ |\"]|$)))");
 	private final Logger LOGGER = LoggerFactory.getLogger(Commands.class);
-	public static final int AdminLevel = 100;
-	public static final int Sub1AdminLevel = 55;
-	public static final int Sub2AdminLevel = 50;
-	public static final int Sub3AdminLevel = 40;
-	public static final int SupporterLevel = 20;
-	public static final int SubSupporterLevel = 15;
+	public static final int AdminLevel = 100; //SA
+	public static final int Sub1AdminLevel = 55; //TS-Team
+	public static final int Sub2AdminLevel = 50; //Forum/Technik
+	public static final int Sub3AdminLevel = 40; //Rest
+	public static final int SupporterLevel = 20; //Verifizierer
+	public static final int SubSupporterLevel = 15; //Kommandeur
 	public static final int UserLevel = 10;
 	public static final int EveryoneLevel = 0;
 	private FrostBot _bot;
@@ -77,9 +77,12 @@ public class Commands
 		registerCommand(new DeleteEventCommand(SubSupporterLevel));
 		registerCommand(new SetChannelRecording(SubSupporterLevel));
 		registerCommand(new RemoveRecCommand(SubSupporterLevel));
+		registerCommand(new BlockRecordChannel(Sub1AdminLevel));
+		registerCommand(new RemBlockCommand(Sub1AdminLevel));
 		// Channel
 		registerCommand(new CreateChannelCommand(SubSupporterLevel));
 		registerCommand(new SetupChannelCommand(SubSupporterLevel));
+
 		// Guild Commands
 		registerCommand(new ListGuildsCommand(UserLevel));
 		registerCommand(new JoinGuildCommand(UserLevel));
@@ -98,8 +101,6 @@ public class Commands
 		registerCommand(new CloseTicketCommand(Sub2AdminLevel));
 		registerCommand(new SetCommentCommand(Sub2AdminLevel));
 		registerCommand(new ResetForumVerifyRequest(Sub2AdminLevel));
-		registerCommand(new BlockRecordChannel(Sub1AdminLevel));
-		registerCommand(new RemBlockCommand(Sub1AdminLevel));
 
 		// AFK
 		registerCommand(new AFKCommand(EveryoneLevel));

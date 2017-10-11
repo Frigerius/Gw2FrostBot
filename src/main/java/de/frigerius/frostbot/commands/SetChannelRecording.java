@@ -17,6 +17,7 @@ import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationExceptio
 import main.java.de.frigerius.frostbot.BotSettings;
 import main.java.de.frigerius.frostbot.ColoredText;
 import main.java.de.frigerius.frostbot.FrostBot;
+import main.java.de.frigerius.frostbot.UserDatabase;
 
 public class SetChannelRecording extends BaseCommand
 {
@@ -35,6 +36,7 @@ public class SetChannelRecording extends BaseCommand
 		try
 		{
 			channel = _bot.TS3API.getChannelInfo(client.getChannelId()).get();
+			LOGGER.info(String.format("%s: %s ID: %s", client.getNickname(), getCommand(), channel.getId()));
 		} catch (InterruptedException e1)
 		{
 			return CommandResult.Error;
@@ -43,6 +45,7 @@ public class SetChannelRecording extends BaseCommand
 		{
 			try (Connection con = FrostBot.getSQLConnection())
 			{
+				UserDatabase.AddUser(con, client.getUniqueIdentifier(), client.getNickname());
 				String sql = "INSERT INTO RecChannel (ChannelID, UserUID, ChannelState) VALUES (?,?,'Recording')";
 				try (PreparedStatement stmt = con.prepareStatement(sql))
 				{
@@ -59,6 +62,7 @@ public class SetChannelRecording extends BaseCommand
 
 			} catch (MySQLIntegrityConstraintViolationException e)
 			{
+				LOGGER.error("SQLIntegrityError", e);
 				_bot.TS3API.sendPrivateMessage(client.getId(), ColoredText.red("Dieser Channel kann von dir nicht modifiziert werden."));
 			} catch (SQLException e)
 			{

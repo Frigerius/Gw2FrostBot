@@ -17,6 +17,7 @@ import main.java.de.frigerius.frostbot.BotSettings;
 import main.java.de.frigerius.frostbot.ColoredText;
 import main.java.de.frigerius.frostbot.FrostBot;
 import main.java.de.frigerius.frostbot.MyClient;
+import main.java.de.frigerius.frostbot.UserDatabase;
 
 public class RemoveRecCommand extends BaseCommand
 {
@@ -89,6 +90,7 @@ public class RemoveRecCommand extends BaseCommand
 	{
 		try (Connection con = FrostBot.getSQLConnection())
 		{
+			UserDatabase.AddUser(con, client.getUniqueIdentifier(), client.getNickname());
 			String sql = "DELETE FROM RecChannel WHERE UserUID = ? AND ChannelID = ?";
 			try (PreparedStatement stmt = con.prepareStatement(sql))
 			{

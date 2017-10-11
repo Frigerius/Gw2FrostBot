@@ -17,6 +17,8 @@ import com.github.theholywaffle.teamspeak3.api.event.ClientJoinEvent;
 import com.github.theholywaffle.teamspeak3.api.event.ClientLeaveEvent;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Client;
 
+import main.java.de.frigerius.frostbot.commands.Commands;
+
 public class ClientController
 {
 	private final Logger LOGGER = LoggerFactory.getLogger(ClientController.class);
@@ -65,12 +67,26 @@ public class ClientController
 				msgs.add(String.format("Aktuell findet " + ColoredText.green("ein") + " Event statt. Schreibe " + ColoredText.green("!listevents") + " für mehr Details.",
 						eventCount));
 			}
-
-			if (MyClient.HasGreaterOrEqualCmdPower(MyClient.makeStringToServerGroups(clientEvent.getClientServerGroups()), 45))
+			int[] serverGroups = MyClient.makeStringToServerGroups(clientEvent.getClientServerGroups());
+			if (MyClient.HasGreaterOrEqualCmdPower(serverGroups, 45))
 			{
 				int count = checkTickets(clientEvent);
 				if (count > 0)
 					msgs.add(String.format("Anzahl offener Tickets: [color=green]%s[/color]", count));
+			}
+			if(MyClient.HasGreaterOrEqualCmdPower(serverGroups, Commands.Sub1AdminLevel))
+			{
+				int count = 0;
+				try
+				{
+					count = _bot.TS3API.getComplaints().get().size();
+				} catch (InterruptedException e)
+				{
+					msgs.add(ColoredText.red("Anzahl der Beschwerden konnte nicht angefragt werden."));
+				}
+				if(count > 0) {
+					msgs.add(String.format("Anzahl der Beschwerden: [color=green]%s[/color]", count));
+				}
 			}
 			_bot.sendBulkMessages(clientEvent.getClientId(), null, msgs);
 		}

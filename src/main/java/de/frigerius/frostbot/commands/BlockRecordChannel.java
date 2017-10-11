@@ -11,6 +11,7 @@ import com.github.theholywaffle.teamspeak3.api.wrapper.Client;
 import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException;
 
 import main.java.de.frigerius.frostbot.FrostBot;
+import main.java.de.frigerius.frostbot.UserDatabase;
 
 public class BlockRecordChannel extends BaseCommand
 {
@@ -26,6 +27,7 @@ public class BlockRecordChannel extends BaseCommand
 	{
 		try (Connection con = FrostBot.getSQLConnection())
 		{
+			UserDatabase.AddUser(con, client.getUniqueIdentifier(), client.getNickname());
 			String sql = "INSERT INTO RecChannel (ChannelID, UserUID, ChannelState) VALUES (?,?,'BlockRec')";
 			try (PreparedStatement stmt = con.prepareStatement(sql))
 			{
