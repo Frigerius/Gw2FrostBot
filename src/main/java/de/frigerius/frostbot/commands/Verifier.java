@@ -76,7 +76,12 @@ public class Verifier
 				if (ex.getErrorCode() == ErrorCode.Network)
 				{
 					return VerificationResult.ConnectionError;
-				} else
+				}
+				if(ex.getErrorCode() == ErrorCode.Other && ex.getMessage() == "Endpoint not available")
+				{
+					return VerificationResult.ConnectionError;
+				}
+				else
 				{
 
 					LOGGER.error("Error in AutomatedVerification", ex);

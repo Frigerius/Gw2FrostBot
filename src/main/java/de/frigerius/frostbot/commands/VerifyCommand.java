@@ -192,7 +192,7 @@ public class VerifyCommand extends RequestingBaseCommand
 				{
 					LOGGER.error("Error adding Ticket", e);
 					_bot.TS3API.sendPrivateMessage(client.getId(),
-							ColoredText.red("Leider ist ein Fehler bei der generierung deines Tickets aufgetreten. Bitte wende dich persönlich an die zuständige Instanz."));
+							ColoredText.red("Leider ist ein Fehler bei der Generierung deines Tickets aufgetreten. Bitte wende dich persönlich an die zuständige Instanz."));
 				}
 			} else if (result == VerificationResult.ForumVerificationInProgress)
 			{

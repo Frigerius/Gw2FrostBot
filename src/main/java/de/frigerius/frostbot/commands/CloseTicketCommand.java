@@ -36,7 +36,7 @@ public class CloseTicketCommand extends CriticalTicketCommand
 			{
 				if (!UserDatabase.AddUser(con, client.getUniqueIdentifier(), client.getNickname()))
 					return CommandResult.Error;
-				String sql = "UPDATE Tickets SET State = 'Closed', LastEdit = ?, SupporterUID = ?, Comment = ? WHERE TicketID = ? AND (State = 'Open' OR State = 'InProgress') AND (SupporterUID IS NULL OR SupporterUID = ?)";
+				String sql = "UPDATE Tickets SET State = 'Closed', LastEdit = ?, SupporterUID = ?, Comment = ? WHERE TicketID = ? AND (State = 'Open' OR (State = 'InProgress' AND SupporterUID = ?))";
 				try (PreparedStatement updt = con.prepareStatement(sql))
 				{
 					Date date = new Date();
