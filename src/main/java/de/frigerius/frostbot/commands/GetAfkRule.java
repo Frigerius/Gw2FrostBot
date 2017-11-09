@@ -14,26 +14,7 @@ public class GetAfkRule extends BaseCommand
 	protected CommandResult handleIntern(Client client, String[] args)
 	{
 		int rule = _bot.getAfkMover().GetChannelAfkRule(client.getChannelId());
-		String sRule = "";
-		switch (rule)
-		{
-		case 0:
-			sRule = "Kein/Muted Mikro";
-			break;
-		case 1:
-			sRule = "Keine/Muted Ausgabe";
-			break;
-		case 2:
-			sRule = "Kein/Muted Mikro und Ausgabe";
-			break;
-		case 3:
-			sRule = "Kein/Muted Mikro oder Ausgabe";
-			break;
-		default:
-			sRule = "Keine extra Regel";
-			break;
-		}
-		_bot.TS3API.sendPrivateMessage(client.getId(), String.format("Dein aktueller Channel benutzt folgende AFK-Regel: %s", sRule));
+		_bot.TS3API.sendPrivateMessage(client.getId(), String.format("Dein aktueller Channel benutzt folgende AFK-Regel: %s", _bot.getAfkMover().AfkRuleToString(rule)));
 		return CommandResult.NoErrors;
 	}
 

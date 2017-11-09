@@ -254,4 +254,20 @@ public class AfkMover extends ClientService
 			return channelRule.intValue();
 		return BotSettings.afkRule;
 	}
+	
+	public String AfkRuleToString(int rule) {
+		switch (rule)
+		{
+		case 0:
+			return "Kein/Muted Mikro";
+		case 1:
+			return "Keine/Muted Ausgabe";
+		case 2:
+			return "Kein/Muted Mikro und Ausgabe";
+		case 3:
+			return "Kein/Muted Mikro oder Ausgabe";
+		default:
+			return "Keine extra Regel";
+		}
+	}
 }

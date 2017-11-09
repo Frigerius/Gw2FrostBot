@@ -37,6 +37,7 @@ public class SetAfkRule extends BaseCommand
 					rule = tmp;
 			}
 			_bot.getAfkMover().SetChannelAfkRule(client.getChannelId(), rule);
+			_bot.TS3API.sendPrivateMessage(client.getId(), String.format("Dein aktueller Channel benutzt jetzt folgende AFK-Regel: %s", _bot.getAfkMover().AfkRuleToString(rule)));
 		} catch (NumberFormatException e)
 		{
 			return CommandResult.ArgumentError;
