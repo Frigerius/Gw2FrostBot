@@ -18,6 +18,7 @@ public class AfkMover extends ClientService
 	private final ConcurrentHashMap<Integer, MyClient> _afkUsers;
 	private final ReentrantLock _lock;
 	private final HashSet<Integer> _spectateChannelForAfks = new HashSet<>();
+	private final ConcurrentHashMap<Integer, Integer> _channelRuleMap = new ConcurrentHashMap<>();
 	private FrostBot _bot;
 	private ClientController _clientController;
 
@@ -49,7 +50,11 @@ public class AfkMover extends ClientService
 	protected void handleAfk(final Client c)
 	{
 		int channelId = c.getChannelId();
-		if (isClientAFK(c))
+		int rule = BotSettings.afkRule;
+		Integer channelRule = _channelRuleMap.get(channelId);
+		if(channelRule != null)
+			rule = channelRule.intValue();
+		if (isClientAFK(c, rule))
 		{
 			_lock.lock();
 			try
@@ -97,20 +102,28 @@ public class AfkMover extends ClientService
 
 	private boolean isClientAFK(Client c)
 	{
+		return isClientAFK(c, BotSettings.afkRule);
+	}
+	
+	private boolean isClientAFK(Client c, int rule)
+	{
 		boolean result = false;
-		switch (BotSettings.afkRule)
+		switch (rule)
 		{
 		case 0:
 			result = (c.isInputMuted() || !c.isInputHardware());
 			break;
 		case 1:
-			result = (c.isInputMuted() || !c.isInputHardware()) && (c.isOutputMuted() || !c.isOutputHardware());
-			break;
-		case 2:
 			result = (c.isOutputMuted() || !c.isOutputHardware());
 			break;
-		default:
+		case 2:
+			result = (c.isInputMuted() || !c.isInputHardware()) && (c.isOutputMuted() || !c.isOutputHardware());
+			break;
+		case 3:
 			result = (c.isInputMuted() || !c.isInputHardware()) || (c.isOutputMuted() || !c.isOutputHardware());
+			break;
+		default:
+			result = true;
 			break;
 		}
 		return result && c.getIdleTime() >= BotSettings.afkTime;
@@ -225,5 +238,20 @@ public class AfkMover extends ClientService
 	public boolean isClientAfk(int id)
 	{
 		return _afkUsers.contains(id);
+	}
+	
+	public void SetChannelAfkRule(int channelId, int rule) {
+		if(rule == BotSettings.afkRule)
+			_channelRuleMap.remove(channelId);
+		else {
+			_channelRuleMap.put(channelId, rule);
+		}
+	}
+	
+	public int GetChannelAfkRule(int channelId) {
+		Integer channelRule = _channelRuleMap.get(channelId);
+		if(channelRule != null)
+			return channelRule.intValue();
+		return BotSettings.afkRule;
 	}
 }

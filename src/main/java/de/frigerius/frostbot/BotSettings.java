@@ -39,7 +39,7 @@ public class BotSettings
 	public static final List<Integer> afkIgnoreServerGroups = new ArrayList<>();
 	public static int afkChannelID = -1;
 	public static int afkChannelIDLong = -1;
-	public static int afkRule = -1; // 0 = In, 1 =In&Out, 2 = Out, default=In | Out
+	public static int afkRule = -1; //0 = In, 1 = Out, 2 = In&Out, 3 = In|Out, default = nothing
 
 	// Messages
 	public static String helpMessage = "";
@@ -251,6 +251,7 @@ public class BotSettings
 		Section afkMover = defaultIni.get("AFK Mover");
 		afkMover.put("channelID", -1);
 		afkMover.put("enabled", false);
+		afkMover.putComment("afkRule", "0 = In, 1 = Out, 2 = In&Out, 3 = In|Out, default = nothing");
 		afkMover.put("afkRule", -1);
 		afkMover.put("maxAfkTime", 900000);
 		afkMover.put("spectateChannelId", "id");

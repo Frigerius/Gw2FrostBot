@@ -82,6 +82,8 @@ public class Commands
 		// Channel
 		registerCommand(new CreateChannelCommand(SubSupporterLevel));
 		registerCommand(new SetupChannelCommand(SubSupporterLevel));
+		registerCommand(new SetAfkRule(SubSupporterLevel));
+		registerCommand(new GetAfkRule(EveryoneLevel));
 
 		// Guild Commands
 		registerCommand(new ListGuildsCommand(UserLevel));
@@ -108,6 +110,8 @@ public class Commands
 		// Mute Bot
 		registerCommand(new ShutUpCommand(UserLevel));
 		registerCommand(new INeedUCommand(UserLevel));
+		//Fun
+		registerCommand(new KickCommand(EveryoneLevel));
 
 		// Console Commands
 		registerConsoleCommand(new HelpCommand(0, this));
