@@ -41,6 +41,7 @@ public class FrostBot
 	private AfkMover _afkMover;
 	private GuildManager _guildManager;
 	private ChannelController _channelController;
+	private ChannelBotCommander _channelBotCommander;
 
 	private News _news;
 	private final HashSet<Integer> _userRanks = new HashSet<>();
@@ -60,6 +61,7 @@ public class FrostBot
 		_console = new Console();
 		_guildManager = new GuildManager();
 		_channelController = new ChannelController();
+		_channelBotCommander = new ChannelBotCommander();
 		_news = new News("news.txt");
 	}
 
@@ -106,6 +108,11 @@ public class FrostBot
 	public ChannelController getChannelController()
 	{
 		return _channelController;
+	}
+
+	public ChannelBotCommander getChannelBotCommander()
+	{
+		return _channelBotCommander;
 	}
 
 	// Methos
@@ -180,6 +187,7 @@ public class FrostBot
 		}
 		_tasks.stopAll();
 		QUERY.exit();
+		_channelBotCommander.closeAll();
 	}
 
 	private void onConnected()
@@ -225,7 +233,7 @@ public class FrostBot
 		List<String> toSend = new LinkedList<String>();
 		for (String msg : msgs)
 		{
-			if (msgSize + msg.length() + (tmp.size() * 2) < 1024)
+			if (msgSize + msg.length() + /*#\n*/(tmp.size() * 2) < 1024)
 			{
 				msgSize += msg.length();
 			} else

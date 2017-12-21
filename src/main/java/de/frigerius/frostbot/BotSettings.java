@@ -22,6 +22,8 @@ public class BotSettings
 	// Server
 	public static String username = "";
 	public static String password = "";
+	public static String channelBotUsername = "";
+	public static String channelBotPassword = "";
 	public static String serverIP = "localhost";
 	public static int port = 10011;
 	public static int serverID = 1;
@@ -39,12 +41,15 @@ public class BotSettings
 	public static final List<Integer> afkIgnoreServerGroups = new ArrayList<>();
 	public static int afkChannelID = -1;
 	public static int afkChannelIDLong = -1;
-	public static int afkRule = -1; //0 = In, 1 = Out, 2 = In&Out, 3 = In|Out, default = nothing
+	public static int afkRule = -1; // 0 = In, 1 = Out, 2 = In&Out, 3 = In|Out, default = nothing
 
 	// Messages
 	public static String helpMessage = "";
 	public static String explMessage = "";
 	public static String homepage = "";
+
+	// ChannelBot
+	public static String channelBotID;
 
 	// Support
 	public static int supporterChannelID = -1;
@@ -97,6 +102,9 @@ public class BotSettings
 			notifyUserIDs.add(uid);
 		}
 		serverName = connection.get("servername");
+		channelBotID = connection.get("channelBotID");
+		channelBotUsername = connection.get("channelBotUsername");
+		channelBotPassword = connection.get("channelBotPassword");
 
 		// Read AfkMover Settings
 		Section afkMover = ini.get("AFK Mover");

@@ -26,12 +26,12 @@ public class Commands
 	private final Pattern _pattern = Pattern.compile("(^(?<command>!([a-z]*(?= |$)))|((?<=[ ])((\"(?<param>(((?!\").)*))\")|(?<param2>(((?!\"|[ ]).)*)))(?=[ |\"]|$)))");
 	private final Pattern _consolePattern = Pattern.compile("(^(?<command>([a-z]*(?= |$)))|((?<=[ ])((\"(?<param>(((?!\").)*))\")|(?<param2>(((?!\"|[ ]).)*)))(?=[ |\"]|$)))");
 	private final Logger LOGGER = LoggerFactory.getLogger(Commands.class);
-	public static final int AdminLevel = 100; //SA
-	public static final int Sub1AdminLevel = 55; //TS-Team
-	public static final int Sub2AdminLevel = 50; //Forum/Technik
-	public static final int Sub3AdminLevel = 40; //Rest
-	public static final int SupporterLevel = 20; //Verifizierer
-	public static final int SubSupporterLevel = 15; //Kommandeur
+	public static final int AdminLevel = 100; // SA
+	public static final int Sub1AdminLevel = 55; // TS-Team
+	public static final int Sub2AdminLevel = 50; // Forum/Technik
+	public static final int Sub3AdminLevel = 40; // Rest
+	public static final int SupporterLevel = 20; // Verifizierer
+	public static final int SubSupporterLevel = 15; // Kommandeur
 	public static final int UserLevel = 10;
 	public static final int EveryoneLevel = 0;
 	private FrostBot _bot;
@@ -84,6 +84,8 @@ public class Commands
 		registerCommand(new SetupChannelCommand(SubSupporterLevel));
 		registerCommand(new SetAfkRule(SubSupporterLevel));
 		registerCommand(new GetAfkRule(EveryoneLevel));
+		registerCommand(new RequestSurveyCommand(UserLevel));
+		registerCommand(new ExitChannelBotCommand(UserLevel));
 
 		// Guild Commands
 		registerCommand(new ListGuildsCommand(UserLevel));
@@ -110,7 +112,7 @@ public class Commands
 		// Mute Bot
 		registerCommand(new ShutUpCommand(UserLevel));
 		registerCommand(new INeedUCommand(UserLevel));
-		//Fun
+		// Fun
 		registerCommand(new KickCommand(EveryoneLevel));
 
 		// Console Commands
