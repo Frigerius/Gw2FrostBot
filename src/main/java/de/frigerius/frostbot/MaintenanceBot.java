@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,10 +18,12 @@ public class MaintenanceBot {
 	private final Logger LOGGER = LoggerFactory.getLogger(MaintenanceBot.class);
 	private MyConnection _connection;
 	private FrostBot _bot;
+	private AtomicInteger _queryCount;
 
 	public MaintenanceBot(String[] args) {
 		LOGGER.info("Starte Wartung...");
 		BotSettings.nickName = "MaintenanceBot";
+		_bot = FrostBot.getInstance();
 		_connection = new MyConnection(() -> {
 		});
 
@@ -29,13 +32,13 @@ public class MaintenanceBot {
 			for (String s : args) {
 
 				if (s.equals("fillSg")) {
-					FillServerGroupTable();
+					fillServerGroupTable();
 				}
 				if (s.equalsIgnoreCase("setupdb")) {
-					SetupDBS(con);
+					setupDBS(con);
 				}
 				if (s.equals("resetverifications")) {
-					RemoveVerifications(con);
+					removeVerifications(con);
 				}
 			}
 		} catch (SQLException e) {
@@ -43,7 +46,7 @@ public class MaintenanceBot {
 		}
 	}
 
-	private void FillServerGroupTable() {
+	private void fillServerGroupTable() {
 		_connection.init();
 		_bot.TS3API.getServerGroups().onSuccess(result -> {
 			PreparedStatement insrt = null;
@@ -74,7 +77,7 @@ public class MaintenanceBot {
 		});
 	}
 
-	private void SetupDBS(Connection con) {
+	private void setupDBS(Connection con) {
 		try (Statement stmt = con.createStatement()) {
 			String createUsers = "CREATE TABLE Users(UserUID VARCHAR(40) NOT NULL PRIMARY KEY, UserName VARCHAR(255) NOT NULL)";
 			String createServerGroups = "CREATE TABLE ServerGroups(ID INT(11) NOT NULL PRIMARY KEY, Name VARCHAR(255), IsUserRank BOOLEAN, CmdPower INT(11))";
@@ -99,7 +102,7 @@ public class MaintenanceBot {
 		}
 	}
 
-	public void RemoveVerifications(Connection con) {
+	public void removeVerifications(Connection con) {
 		_connection.init();
 		_bot.refreshRankPermissionMaps();
 		_bot.TS3API.sendServerMessage("[INFO] Es werden nun die verifizierten Benutzer zurückgesetzt. Während dessen steht euch der Bot nicht zur Verfügung.");
@@ -117,6 +120,7 @@ public class MaintenanceBot {
 		List<Integer> ids = new LinkedList<Integer>(BotSettings.server_groupMap.values());
 		ids.add(BotSettings.removeGroupIdOnVerify);
 		LOGGER.info("Removing clients from ServerGroups...");
+		_queryCount = new AtomicInteger(ids.size());
 		for (int id : ids) {
 			if (_bot.isUserRank(id)) {
 				int sgId = id;
@@ -127,19 +131,27 @@ public class MaintenanceBot {
 							LOGGER.info(String.format("Failed removing Client %s from ServerGroup %d", client.getNickname(), sgId));
 						});
 					}
+					maybeExit();
 				}).onFailure(b -> {
+					maybeExit();
 					LOGGER.error(String.format("Failed getting clients from ServerGroup %d", sgId));
 				});
 			}
 		}
-		try {
-			_bot.TS3API.sendServerMessage(
-					"[INFO] Die verifizierten Benutzer wurden erfolgreich zurückgesetzt.\nBitte wende dich mit \"!help verify\" an den FrostBot, um zu erfahren, wie du dich wieder verifizieren kannst.\n").await();
-			_bot.QUERY.exit();
-		} catch (InterruptedException e) {
-			LOGGER.error("WhoAmI Filed", e);
-		}
 
+	}
+
+	private void maybeExit() {
+		if (_queryCount.decrementAndGet() <= 0) {
+			_bot.TS3API.sendServerMessage(
+					"[INFO] Die verifizierten Benutzer wurden erfolgreich zurückgesetzt.\nBitte wende dich mit \"!help verify\" an den FrostBot, um zu erfahren, wie du dich wieder verifizieren kannst.\n")
+					.onSuccess(b -> {
+						_bot.QUERY.exit();
+					}).onFailure(b -> {
+						LOGGER.error("SendingMessageFailed.");
+						_bot.QUERY.exit();
+					});
+		}
 	}
 
 }

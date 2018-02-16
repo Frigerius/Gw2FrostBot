@@ -17,13 +17,12 @@ public class Tasks {
 		try {
 			service.scheduleAtFixedRate(mainLoop, 0, 4000, TimeUnit.MILLISECONDS);
 		} catch (Exception e) {
-			LOGGER.error("Error on Creating Task");
-			e.printStackTrace();
+			LOGGER.error("Error on Creating Task", e);
 		}
 	}
 
 	public void stopAll() {
-		if (!service.isShutdown())
+		if (service.isShutdown())
 			service.shutdownNow();
 	}
 
