@@ -51,7 +51,6 @@ public class FrostBot {
 
 	private FrostBot() {
 		_instance = this;
-		_tasks = new Tasks();
 		_commands = new Commands();
 		_clientController = new ClientController();
 		_events = new Events();
@@ -65,10 +64,6 @@ public class FrostBot {
 
 	public static FrostBot getInstance() {
 		return _instance == null ? new FrostBot() : _instance;
-	}
-
-	public Tasks getTasks() {
-		return _tasks;
 	}
 
 	public Commands getCommands() {
@@ -122,11 +117,6 @@ public class FrostBot {
 				return false;
 			_guildManager.refresh();
 			_commands.init();
-			if (BotSettings.isAFKMoverEnabled) {
-				LOGGER.info("Adding AfkMover to Tasks...");
-				_afkMover = new AfkMover();
-				_tasks.AddTask(_afkMover);
-			}
 			_connection.init();
 			TS3API.getChannels().onSuccess(channels -> {
 				if (BotSettings.isAFKMoverEnabled) {
@@ -149,6 +139,23 @@ public class FrostBot {
 		return true;
 	}
 
+	private void createTasks() {
+		LOGGER.info("Creating Tasks...");
+		if (_tasks != null) {
+			_tasks.stopAll();
+		}
+		_tasks = new Tasks();
+		if (BotSettings.isAFKMoverEnabled) {
+			LOGGER.info("Adding AfkMover to Tasks...");
+			if (_afkMover == null)
+				_afkMover = new AfkMover();
+			_tasks.AddTask(_afkMover);
+		}
+
+		LOGGER.info("Starting Main Loop...");
+		_tasks.startMainLoop();
+	}
+
 	public void stop() {
 		LOGGER.info("FrostBot is shutting down!");
 		try {
@@ -160,7 +167,8 @@ public class FrostBot {
 		} catch (InterruptedException e) {
 			LOGGER.info("Could not send shutdown message!");
 		}
-		_tasks.stopAll();
+		if (_tasks != null)
+			_tasks.stopAll();
 		QUERY.exit();
 		_channelBotCommander.closeAll();
 	}
@@ -176,8 +184,7 @@ public class FrostBot {
 			refreshRankPermissionMaps();
 			LOGGER.info("Starting User refresh...");
 			_clientController.refreshUsers(result);
-			LOGGER.info("Starting Main Loop...");
-			FrostBot.getInstance().getTasks().startMainLoop();
+			createTasks();
 			LOGGER.info("Events are being registered...");
 			TS3API.registerAllEvents();
 		});

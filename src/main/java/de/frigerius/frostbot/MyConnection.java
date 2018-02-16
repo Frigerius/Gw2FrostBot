@@ -58,7 +58,6 @@ public class MyConnection {
 	}
 
 	private void connect() throws InterruptedException {
-		FrostBot.getInstance().getTasks().stopAll();
 		_bot.TS3API.login(BotSettings.username, BotSettings.password);
 		_bot.TS3API.selectVirtualServerById(BotSettings.serverID);
 		_bot.TS3API.setNickname(BotSettings.nickName).get();

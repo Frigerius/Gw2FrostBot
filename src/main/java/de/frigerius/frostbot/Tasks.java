@@ -22,7 +22,7 @@ public class Tasks {
 	}
 
 	public void stopAll() {
-		if (service.isShutdown())
+		if (!service.isShutdown())
 			service.shutdownNow();
 	}
 
