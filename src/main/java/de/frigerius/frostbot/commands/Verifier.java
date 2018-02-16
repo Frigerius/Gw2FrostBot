@@ -42,7 +42,7 @@ public class Verifier {
 		_bot = FrostBot.getInstance();
 		_gw2api = gw2api;
 		_worlds = worlds;
-		_apiKey = apikey;
+		_apiKey = apikey.replace("[", "").replace("]", "");
 		_fUserName = fUserName;
 		_isVerified = MyClient.isInServerGroup(client.getServerGroups(), BotSettings.server_groupMap.values());
 		_client = client;
@@ -52,12 +52,12 @@ public class Verifier {
 		if (_acc == null) {
 			try {
 				if (!_bot.isValidAPIKey(_apiKey)) {
-					LOGGER.warn("API-Key ist ungültig.");
+					LOGGER.warn("Invalid API-Key!");
 					return VerificationResult.InvalidAPIKey;
 				}
-				LOGGER.info(String.format("Api wird angefragt für %s", _client.getNickname()));
+				LOGGER.info(String.format("Requesting API for %s", _client.getNickname()));
 				_acc = _gw2api.getSynchronous().getAccountInfo(_apiKey);
-				LOGGER.info(String.format("Anfrage der API abgeschlossen für %s", _client.getNickname()));
+				LOGGER.info(String.format("Request finished for %s", _client.getNickname()));
 				_worldName = _worlds.get(_acc.getWorldId());
 
 			} catch (GuildWars2Exception ex) {
