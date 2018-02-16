@@ -13,36 +13,29 @@ import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationExceptio
 import main.java.de.frigerius.frostbot.FrostBot;
 import main.java.de.frigerius.frostbot.UserDatabase;
 
-public class BlockRecordChannel extends BaseCommand
-{
+public class BlockRecordChannel extends BaseCommand {
 	private final Logger LOGGER = LoggerFactory.getLogger(BlockRecordChannel.class);
 
-	public BlockRecordChannel(int cmdPwr)
-	{
+	public BlockRecordChannel(int cmdPwr) {
 		super("blockrec", cmdPwr);
 	}
 
 	@Override
-	protected CommandResult handleIntern(Client client, String[] args)
-	{
-		try (Connection con = FrostBot.getSQLConnection())
-		{
+	protected CommandResult handleIntern(Client client, String[] args) {
+		try (Connection con = FrostBot.getSQLConnection()) {
 			UserDatabase.AddUser(con, client.getUniqueIdentifier(), client.getNickname());
 			String sql = "INSERT INTO RecChannel (ChannelID, UserUID, ChannelState) VALUES (?,?,'BlockRec')";
-			try (PreparedStatement stmt = con.prepareStatement(sql))
-			{
+			try (PreparedStatement stmt = con.prepareStatement(sql)) {
 				stmt.setInt(1, client.getChannelId());
 				stmt.setString(2, client.getUniqueIdentifier());
 				int result = stmt.executeUpdate();
-				if(result == 1)
+				if (result == 1)
 					_bot.TS3API.sendPrivateMessage(client.getId(), "Der Channel ist nun für !setrec gesperrt. Diese Sperre lässt sich mit !remblock wieder aufheben.");
 			}
 
-		} catch (MySQLIntegrityConstraintViolationException e)
-		{
+		} catch (MySQLIntegrityConstraintViolationException e) {
 			_bot.TS3API.sendPrivateMessage(client.getId(), "Der Channel ist als Record-Channel eingetragen. Bitte benutze !remrec bevor du diesen Channel sperrst.");
-		} catch (SQLException e)
-		{
+		} catch (SQLException e) {
 			LOGGER.error("SQL Error", e);
 			return CommandResult.Error;
 		}
@@ -51,20 +44,17 @@ public class BlockRecordChannel extends BaseCommand
 	}
 
 	@Override
-	public String getArguments()
-	{
+	public String getArguments() {
 		return "";
 	}
 
 	@Override
-	public String getDescription()
-	{
+	public String getDescription() {
 		return "Verhindert das setzen des Recording-Symbols für diesen Channel mittels !setrec.";
 	}
 
 	@Override
-	protected String getDetails()
-	{
+	protected String getDetails() {
 		return "";
 	}
 

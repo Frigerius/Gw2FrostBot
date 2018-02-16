@@ -7,35 +7,28 @@ import com.github.theholywaffle.teamspeak3.api.wrapper.Client;
 import main.java.de.frigerius.frostbot.Extensions.SurveyExtension;
 import main.java.de.frigerius.frostbot.exceptions.ChannelAlreadyHasBotException;
 
-public class SurveyController
-{
+public class SurveyController {
 
 	private static SurveyController _instance;
 	private ChannelBotCommander _commander;
 	private ConcurrentHashMap<String, SurveyExtension> _surveys = new ConcurrentHashMap<>();
 
-	private SurveyController()
-	{
+	private SurveyController() {
 		_instance = this;
 		_commander = FrostBot.getInstance().getChannelBotCommander();
 	}
 
-	public static SurveyController getInstance()
-	{
+	public static SurveyController getInstance() {
 		return _instance == null ? new SurveyController() : _instance;
 	}
 
-	public boolean RequestNewSurvey(Client client, String text)
-	{
+	public boolean RequestNewSurvey(Client client, String text) {
 		SurveyExtension survey = _surveys.get(client.getUniqueIdentifier());
-		if (survey == null)
-		{
+		if (survey == null) {
 			String uid = client.getUniqueIdentifier();
-			try
-			{
+			try {
 				ChannelBot bot = _commander.createChannelBot(client, "SurveyBot", client.getChannelId());
-				if (!bot.isInit())
-				{
+				if (!bot.isInit()) {
 					survey = new SurveyExtension(() -> {
 						_surveys.remove(uid);
 					}, text);
@@ -44,8 +37,7 @@ public class SurveyController
 					bot.init();
 					return true;
 				}
-			} catch (ChannelAlreadyHasBotException e)
-			{
+			} catch (ChannelAlreadyHasBotException e) {
 				return false;
 			}
 		}

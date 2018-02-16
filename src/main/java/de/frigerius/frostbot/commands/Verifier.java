@@ -22,10 +22,8 @@ import me.xhsun.guildwars2wrapper.error.ErrorCode;
 import me.xhsun.guildwars2wrapper.error.GuildWars2Exception;
 import me.xhsun.guildwars2wrapper.model.v2.account.Account;
 
-public class Verifier
-{
-	public enum VerificationResult
-	{
+public class Verifier {
+	public enum VerificationResult {
 		Success, TooManyVerifications, ConnectionError, APIError, Failure, ForumVerificationInProgress, InvalidAPIKey
 	}
 
@@ -40,8 +38,7 @@ public class Verifier
 	private Client _client;
 	private String _worldName;
 
-	public Verifier(GuildWars2 gw2api, Map<Integer, String> worlds, Client client, String apikey, String fUserName)
-	{
+	public Verifier(GuildWars2 gw2api, Map<Integer, String> worlds, Client client, String apikey, String fUserName) {
 		_bot = FrostBot.getInstance();
 		_gw2api = gw2api;
 		_worlds = worlds;
@@ -51,14 +48,10 @@ public class Verifier
 		_client = client;
 	}
 
-	private VerificationResult requestAPI()
-	{
-		if (_acc == null)
-		{
-			try
-			{
-				if (!_bot.isValidAPIKey(_apiKey))
-				{
+	private VerificationResult requestAPI() {
+		if (_acc == null) {
+			try {
+				if (!_bot.isValidAPIKey(_apiKey)) {
 					LOGGER.warn("API-Key ist ungültig.");
 					return VerificationResult.InvalidAPIKey;
 				}
@@ -67,22 +60,16 @@ public class Verifier
 				LOGGER.info(String.format("Anfrage der API abgeschlossen für %s", _client.getNickname()));
 				_worldName = _worlds.get(_acc.getWorldId());
 
-			} catch (GuildWars2Exception ex)
-			{
-				if (ex.getErrorCode() == ErrorCode.Server)
-				{
+			} catch (GuildWars2Exception ex) {
+				if (ex.getErrorCode() == ErrorCode.Server) {
 					return VerificationResult.ConnectionError;
 				}
-				if (ex.getErrorCode() == ErrorCode.Network)
-				{
+				if (ex.getErrorCode() == ErrorCode.Network) {
 					return VerificationResult.ConnectionError;
 				}
-				if(ex.getErrorCode() == ErrorCode.Other && ex.getMessage() == "Endpoint not available")
-				{
+				if (ex.getErrorCode() == ErrorCode.Other && ex.getMessage() == "Endpoint not available") {
 					return VerificationResult.ConnectionError;
-				}
-				else
-				{
+				} else {
 
 					LOGGER.error("Error in AutomatedVerification", ex);
 					return VerificationResult.APIError;
@@ -92,38 +79,30 @@ public class Verifier
 		return VerificationResult.Success;
 	}
 
-	public boolean _isVerified()
-	{
+	public boolean isVerified() {
 		return _isVerified;
 	}
 
-	public VerificationResult verifyForum(Connection con) throws SQLException
-	{
+	public VerificationResult verifyForum(Connection con) throws SQLException {
 		VerificationResult requestResult = requestAPI();
-		if (requestResult == VerificationResult.Success)
-		{
-			if (!_isForumVerificationRequested(con))
+		if (requestResult == VerificationResult.Success) {
+			if (!isForumVerificationRequested(con))
 				return CreateForumVerificationRequest(con);
 			else
 				return VerificationResult.ForumVerificationInProgress;
-		} else
-		{
+		} else {
 			return requestResult;
 		}
 	}
 
-	public boolean _isForumVerificationRequested(Connection con) throws SQLException
-	{
+	public boolean isForumVerificationRequested(Connection con) throws SQLException {
 		String sql = "SELECT ForumUserName FROM Verifications WHERE AccountID = ?";
-		try (PreparedStatement stmt = con.prepareStatement(sql))
-		{
+		try (PreparedStatement stmt = con.prepareStatement(sql)) {
 			stmt.setString(1, _acc.getId());
 			ResultSet result = stmt.executeQuery();
-			if (result.next())
-			{
+			if (result.next()) {
 				String name = result.getString("ForumUserName");
-				if (name != null && !name.equals(""))
-				{
+				if (name != null && !name.equals("")) {
 					return true;
 				}
 			}
@@ -131,11 +110,9 @@ public class Verifier
 		return false;
 	}
 
-	public VerificationResult CreateForumVerificationRequest(Connection con)
-	{
+	public VerificationResult CreateForumVerificationRequest(Connection con) {
 		VerificationResult result = requestAPI();
-		if (result == VerificationResult.Success)
-		{
+		if (result == VerificationResult.Success) {
 			if (insertForumUserName(con, _acc.getId(), _worldName, _fUserName))
 				return addTicket(con, _client, _worldName, _fUserName) ? VerificationResult.Success : VerificationResult.Failure;
 		} else
@@ -143,11 +120,9 @@ public class Verifier
 		return VerificationResult.Failure;
 	}
 
-	private boolean insertForumUserName(Connection con, String accountId, String server, String forumUserName)
-	{
+	private boolean insertForumUserName(Connection con, String accountId, String server, String forumUserName) {
 		String insertSQL = "INSERT INTO Verifications (AccountID, Server, LastEdit, ForumUserName) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE Server = ?, LastEdit = ?, ForumUserName = ?";
-		try (PreparedStatement insrt = con.prepareStatement(insertSQL))
-		{
+		try (PreparedStatement insrt = con.prepareStatement(insertSQL)) {
 			insrt.setString(1, accountId);
 			insrt.setString(2, server);
 			Date date = new Date();
@@ -160,18 +135,15 @@ public class Verifier
 			insrt.setString(7, forumUserName);
 			insrt.executeUpdate();
 			return true;
-		} catch (SQLException e)
-		{
+		} catch (SQLException e) {
 			LOGGER.error("Error on selecting usages.");
 		}
 		return false;
 	}
 
-	private boolean addTicket(Connection con, Client client, String worldName, String forumUserName)
-	{
+	private boolean addTicket(Connection con, Client client, String worldName, String forumUserName) {
 		String sql = "INSERT INTO Tickets (RequestorUID, State, Message, LastEdit) VALUES (?, ?, ?, ?)";
-		try (PreparedStatement insrt = con.prepareStatement(sql))
-		{
+		try (PreparedStatement insrt = con.prepareStatement(sql)) {
 			insrt.setString(1, client.getUniqueIdentifier());
 			insrt.setString(2, "Open");
 			insrt.setString(3, String.format("Forums-Verifizierung: Nutzername: %s | Server: %s", forumUserName, worldName));
@@ -180,60 +152,48 @@ public class Verifier
 			insrt.setTimestamp(4, stamp);
 			insrt.executeUpdate();
 			return true;
-		} catch (SQLException e)
-		{
+		} catch (SQLException e) {
 			LOGGER.error("Error on adding Ticket");
 		}
 		return false;
 	}
 
-	public VerificationResult verifyTS(Connection con)
-	{
-		try
-		{
+	public VerificationResult verifyTS(Connection con) {
+		try {
 			VerificationResult requestResult = requestAPI();
-			if (requestResult == VerificationResult.Success)
-			{
+			if (requestResult == VerificationResult.Success) {
 				String accUID = _acc.getId();
 				int accUses = UserDatabase.getAccountUsages(con, accUID);
 				// Check if request is valid
-				if (accUses < 2)
-				{
-					if (BotSettings.server_groupMap.containsKey(_worldName))
-					{
+				if (accUses < 2) {
+					if (BotSettings.server_groupMap.containsKey(_worldName)) {
 						if (verifyInTs(_client, _worldName) == VerificationResult.Failure)
 							return VerificationResult.Failure;
 						insertUser(con, accUID, _client.getNickname(), _client.getUniqueIdentifier(), _worldName);
 						return VerificationResult.Success;
 					}
 
-				} else
-				{
+				} else {
 					LOGGER.info(String.format("%s hat sich zu oft registriert.", _client.getNickname()));
 					return VerificationResult.TooManyVerifications;
 				}
 			} else
 				return requestResult;
-		} catch (Exception e)
-		{
+		} catch (Exception e) {
 			LOGGER.error("AutomatedVerification failed", e);
 		}
 		return VerificationResult.Failure;
 	}
 
-	private VerificationResult verifyInTs(Client client, String worldName) throws InterruptedException
-	{
+	private VerificationResult verifyInTs(Client client, String worldName) throws InterruptedException {
 		int groupId = BotSettings.server_groupMap.get(worldName);
-		if (_bot.isUserRank(groupId))
-		{
+		if (_bot.isUserRank(groupId)) {
 			LOGGER.info(String.format("Adding %s to servergroup %s...", client.getNickname(), worldName));
-			if (BotSettings.removeGroupIdOnVerify != -1 && MyClient.isInServerGroup(client.getServerGroups(), BotSettings.removeGroupIdOnVerify))
-			{
+			if (BotSettings.removeGroupIdOnVerify != -1 && MyClient.isInServerGroup(client.getServerGroups(), BotSettings.removeGroupIdOnVerify)) {
 				_bot.TS3API.removeClientFromServerGroup(BotSettings.removeGroupIdOnVerify, client.getDatabaseId());
 			}
 			boolean result = _bot.TS3API.addClientToServerGroup(groupId, client.getDatabaseId()).get();
-			if (result)
-			{
+			if (result) {
 				LOGGER.info(String.format("%s was added to servergroup %s.", client.getNickname(), worldName));
 				return VerificationResult.Success;
 			}
@@ -241,12 +201,10 @@ public class Verifier
 		return VerificationResult.Failure;
 	}
 
-	private void insertUser(Connection con, String accountId, String nickname, String uid, String server)
-	{
+	private void insertUser(Connection con, String accountId, String nickname, String uid, String server) {
 		String insertSQL = "INSERT INTO Verifications (AccountID, NumOfRegs, FirstUserUID, Server, LastEdit) VALUES (?, ?, ?, ?, ?) "
 				+ "ON DUPLICATE KEY UPDATE NumOfRegs = ?, SecondUserUID = ?, Server = ?, LastEdit = ?";
-		try (PreparedStatement insrt = con.prepareStatement(insertSQL))
-		{
+		try (PreparedStatement insrt = con.prepareStatement(insertSQL)) {
 			insrt.setString(1, accountId);
 			insrt.setInt(2, 1);
 			insrt.setString(3, uid);
@@ -259,8 +217,7 @@ public class Verifier
 			insrt.setString(8, server);
 			insrt.setTimestamp(9, stamp);
 			insrt.executeUpdate();
-		} catch (SQLException e)
-		{
+		} catch (SQLException e) {
 			LOGGER.error("Error on selecting usages.");
 		}
 	}

@@ -12,8 +12,7 @@ import org.slf4j.LoggerFactory;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Channel;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Client;
 
-public class AfkMover extends ClientService
-{
+public class AfkMover extends ClientService {
 	private final Logger LOGGER = LoggerFactory.getLogger(AfkMover.class);
 	private final ConcurrentHashMap<Integer, MyClient> _afkUsers;
 	private final ReentrantLock _lock;
@@ -22,8 +21,7 @@ public class AfkMover extends ClientService
 	private FrostBot _bot;
 	private ClientController _clientController;
 
-	public AfkMover()
-	{
+	public AfkMover() {
 		_bot = FrostBot.getInstance();
 		_lock = new ReentrantLock();
 		_afkUsers = new ConcurrentHashMap<>();
@@ -31,47 +29,36 @@ public class AfkMover extends ClientService
 	}
 
 	@Override
-	void handle(List<Client> clientList)
-	{
-		for (Client c : clientList)
-		{
+	void handle(List<Client> clientList) {
+		for (Client c : clientList) {
 			MyClient client = _afkUsers.get(c.getId());
-			if (client != null)
-			{
+			if (client != null) {
 				handleNotAfk(client, c);
-			} else
-			{
+			} else {
 				handleAfk(c);
 			}
 		}
 
 	}
 
-	protected void handleAfk(final Client c)
-	{
+	protected void handleAfk(final Client c) {
 		int channelId = c.getChannelId();
 		int rule = BotSettings.afkRule;
 		Integer channelRule = _channelRuleMap.get(channelId);
-		if(channelRule != null)
+		if (channelRule != null)
 			rule = channelRule.intValue();
-		if (isClientAFK(c, rule))
-		{
+		if (isClientAFK(c, rule)) {
 			_lock.lock();
-			try
-			{
-				if (_spectateChannelForAfks.contains(channelId))
-				{
-					if (MyClient.isInServerGroup(c.getServerGroups(), BotSettings.afkIgnoreServerGroups))
-					{
+			try {
+				if (_spectateChannelForAfks.contains(channelId)) {
+					if (MyClient.isInServerGroup(c.getServerGroups(), BotSettings.afkIgnoreServerGroups)) {
 						return;
 					}
 
 					MyClient client = new MyClient(c);
-					if (client.getLastChannelId() != BotSettings.afkChannelIDLong)
-					{
+					if (client.getLastChannelId() != BotSettings.afkChannelIDLong) {
 						MyClient sup = _clientController.getActiveSupporter();
-						if (sup != null && sup.getId() == client.getId())
-						{
+						if (sup != null && sup.getId() == client.getId()) {
 							_clientController.setActiveSupporter(null);
 						}
 						_afkUsers.put(client.getId(), client);
@@ -80,19 +67,16 @@ public class AfkMover extends ClientService
 					}
 					LOGGER.info(c.getNickname() + " is afk.");
 				}
-			} finally
-			{
+			} finally {
 				_lock.unlock();
 			}
 		}
 	}
 
-	protected void handleNotAfk(MyClient client, Client c)
-	{
+	protected void handleNotAfk(MyClient client, Client c) {
 		if (isClientAFK(c))
 			return;
-		if (client.getLastChannelId() != -1 && c.getChannelId() == BotSettings.afkChannelIDLong)
-		{
+		if (client.getLastChannelId() != -1 && c.getChannelId() == BotSettings.afkChannelIDLong) {
 			_bot.TS3API.moveClient(client.getId(), client.getLastChannelId());
 			_bot.TS3API.sendPrivateMessage(client.getId(), "Du bist nun nicht mehr AFK und wurdest in deinen vorherigen Channel gezogen.");
 			LOGGER.info(c.getNickname() + " is back again.");
@@ -100,16 +84,13 @@ public class AfkMover extends ClientService
 		}
 	}
 
-	private boolean isClientAFK(Client c)
-	{
+	private boolean isClientAFK(Client c) {
 		return isClientAFK(c, BotSettings.afkRule);
 	}
-	
-	private boolean isClientAFK(Client c, int rule)
-	{
+
+	private boolean isClientAFK(Client c, int rule) {
 		boolean result = false;
-		switch (rule)
-		{
+		switch (rule) {
 		case 0:
 			result = (c.isInputMuted() || !c.isInputHardware());
 			break;
@@ -129,135 +110,108 @@ public class AfkMover extends ClientService
 		return result && c.getIdleTime() >= BotSettings.afkTime;
 	}
 
-	public void refreshAFKChannelList()
-	{
+	public void refreshAFKChannelList() {
 		_bot.TS3API.getChannels().onSuccess(channels -> {
 			refreshAFKChannelList(channels);
 		});
 	}
 
-	public void refreshAFKChannelList(List<Channel> channels)
-	{
+	public void refreshAFKChannelList(List<Channel> channels) {
 		_lock.lock();
 		_spectateChannelForAfks.clear();
 		_spectateChannelForAfks.add(BotSettings.supporterChannelID);
-		try
-		{
-			for (int i : BotSettings.afkSpectateChannelIDs)
-			{
+		try {
+			for (int i : BotSettings.afkSpectateChannelIDs) {
 				_spectateChannelForAfks.add(i);
 			}
-			for (Channel channel : channels)
-			{
+			for (Channel channel : channels) {
 				int PID = channel.getParentChannelId();
 				if (_spectateChannelForAfks.contains(PID))
 					_spectateChannelForAfks.add(channel.getId());
 			}
-		} finally
-		{
+		} finally {
 			_lock.unlock();
 		}
 	}
 
-	public void addSpectateChannel(int parentId, int channelId)
-	{
+	public void addSpectateChannel(int parentId, int channelId) {
 		_lock.lock();
-		try
-		{
-			if (_spectateChannelForAfks.contains(parentId))
-			{
+		try {
+			if (_spectateChannelForAfks.contains(parentId)) {
 				_spectateChannelForAfks.add(channelId);
 			}
-		} finally
-		{
+		} finally {
 			_lock.unlock();
 		}
 	}
 
-	public void addSpecateChannel(int channelId)
-	{
+	public void addSpecateChannel(int channelId) {
 		_lock.lock();
-		try
-		{
+		try {
 			_spectateChannelForAfks.add(channelId);
-		} finally
-		{
+		} finally {
 			_lock.unlock();
 		}
 	}
 
-	public void removeSpecateChannel(int channelid)
-	{
+	public void removeSpecateChannel(int channelid) {
 		_lock.lock();
-		try
-		{
+		try {
 			_spectateChannelForAfks.remove(channelid);
-		} finally
-		{
+		} finally {
 			_lock.unlock();
 		}
 	}
 
-	public void onChannelMoved(int parentId, int channelId)
-	{
+	public void onChannelMoved(int parentId, int channelId) {
 		_lock.lock();
-		try
-		{
-			if (_spectateChannelForAfks.contains(parentId))
-			{
+		try {
+			if (_spectateChannelForAfks.contains(parentId)) {
 				_spectateChannelForAfks.add(channelId);
-			} else
-			{
+			} else {
 				_spectateChannelForAfks.remove(channelId);
 			}
-		} finally
-		{
+		} finally {
 			_lock.unlock();
 		}
 	}
 
-	public void removeClient(int id)
-	{
+	public void removeClient(int id) {
 		_afkUsers.remove(id);
 	}
 
-	public void refreshAfks(LinkedList<MyClient> stillAFK)
-	{
+	public void refreshAfks(LinkedList<MyClient> stillAFK) {
 		_afkUsers.clear();
-		for (MyClient client : stillAFK)
-		{
+		for (MyClient client : stillAFK) {
 			_afkUsers.put(client.getId(), client);
 		}
 	}
 
-	public MyClient getClient(int id)
-	{
+	public MyClient getClient(int id) {
 		return _afkUsers.get(id);
 	}
 
-	public boolean isClientAfk(int id)
-	{
+	public boolean isClientAfk(int id) {
 		return _afkUsers.contains(id);
 	}
-	
+
 	public void SetChannelAfkRule(int channelId, int rule) {
-		if(rule == BotSettings.afkRule)
+		if (rule == BotSettings.afkRule)
 			_channelRuleMap.remove(channelId);
 		else {
 			_channelRuleMap.put(channelId, rule);
 		}
 	}
-	
+
 	public int GetChannelAfkRule(int channelId) {
 		Integer channelRule = _channelRuleMap.get(channelId);
-		if(channelRule != null)
+		if (channelRule != null)
 			return channelRule.intValue();
 		return BotSettings.afkRule;
 	}
-	
+
 	public String AfkRuleToString(int rule) {
-		switch (rule)
-		{
+		switch (rule) {
 		case 0:
 			return "Kein/Muted Mikro";
 		case 1:

@@ -5,21 +5,17 @@ import org.slf4j.LoggerFactory;
 
 import com.github.theholywaffle.teamspeak3.api.wrapper.Client;
 
-public class ClientInfoCommand extends BaseCommand
-{
+public class ClientInfoCommand extends BaseCommand {
 	private final Logger LOGGER = LoggerFactory.getLogger(ClientInfoCommand.class);
 
-	public ClientInfoCommand(int cmdPwr)
-	{
+	public ClientInfoCommand(int cmdPwr) {
 		super("getclinfo", cmdPwr);
 	}
 
 	@Override
-	protected CommandResult handleIntern(Client cl, String[] args)
-	{
+	protected CommandResult handleIntern(Client cl, String[] args) {
 		_bot.TS3API.getClients().onSuccess(result -> {
-			for (Client c : result)
-			{
+			for (Client c : result) {
 				LOGGER.info(c.getNickname() + " " + c.getId() + " " + c.isServerQueryClient());
 			}
 		});
@@ -27,20 +23,17 @@ public class ClientInfoCommand extends BaseCommand
 	}
 
 	@Override
-	public String getArguments()
-	{
+	public String getArguments() {
 		return "";
 	}
 
 	@Override
-	public String getDescription()
-	{
+	public String getDescription() {
 		return "";
 	}
 
 	@Override
-	protected String getDetails()
-	{
+	protected String getDetails() {
 		// TODO Auto-generated method stub
 		return "";
 	}

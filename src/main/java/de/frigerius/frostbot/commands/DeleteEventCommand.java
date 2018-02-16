@@ -5,50 +5,40 @@ import com.github.theholywaffle.teamspeak3.api.wrapper.Client;
 import main.java.de.frigerius.frostbot.ColoredText;
 import main.java.de.frigerius.frostbot.WvWEvents;
 
-public class DeleteEventCommand extends BaseCommand
-{
+public class DeleteEventCommand extends BaseCommand {
 
-	public DeleteEventCommand(int cmdPwr)
-	{
+	public DeleteEventCommand(int cmdPwr) {
 		super("delevent", cmdPwr);
 	}
 
 	@Override
-	protected CommandResult handleIntern(Client c, String[] args)
-	{
-		try
-		{
+	protected CommandResult handleIntern(Client c, String[] args) {
+		try {
 			int id = Integer.parseInt(args[0]);
-			if (WvWEvents.removeEvent(id, c.getUniqueIdentifier()))
-			{
+			if (WvWEvents.removeEvent(id, c.getUniqueIdentifier())) {
 				_bot.TS3API.sendPrivateMessage(c.getId(), ColoredText.green("Das Event wurde erfolgreich entfernt."));
-			} else
-			{
+			} else {
 				_bot.TS3API.sendPrivateMessage(c.getId(),
 						ColoredText.red("Das Event konnte nicht entfernt werden, entweder ist die ID falsch, oder das Event wurde nicht von dir erstellt."));
 			}
-		} catch (NumberFormatException ex)
-		{
+		} catch (NumberFormatException ex) {
 			return CommandResult.ArgumentError;
 		}
 		return CommandResult.NoErrors;
 	}
 
 	@Override
-	public String getArguments()
-	{
+	public String getArguments() {
 		return "[ID]";
 	}
 
 	@Override
-	public String getDescription()
-	{
+	public String getDescription() {
 		return "(Beta!) Entfernt dein Event mit der angegebenen ID.";
 	}
 
 	@Override
-	protected String getDetails()
-	{
+	protected String getDetails() {
 		return "";
 	}
 

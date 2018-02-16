@@ -15,38 +15,31 @@ import main.java.de.frigerius.frostbot.ColoredText;
 import main.java.de.frigerius.frostbot.FrostBot;
 import main.java.de.frigerius.frostbot.UserDatabase;
 
-public class SetCommentCommand extends CriticalTicketCommand
-{
+public class SetCommentCommand extends CriticalTicketCommand {
 	private final Logger LOGGER = LoggerFactory.getLogger(SetCommentCommand.class);
 
-	public SetCommentCommand(int cmdPwr)
-	{
+	public SetCommentCommand(int cmdPwr) {
 		super("scticket", cmdPwr);
 	}
 
 	@Override
-	protected CommandResult sHandleIntern(Client client, String[] args)
-	{
+	protected CommandResult sHandleIntern(Client client, String[] args) {
 		if (args.length != 2)
 			return CommandResult.ArgumentError;
-		try
-		{
+		try {
 			int ticketID = Integer.parseInt(args[0]);
-			try (Connection con = FrostBot.getSQLConnection())
-			{
+			try (Connection con = FrostBot.getSQLConnection()) {
 				if (!UserDatabase.AddUser(con, client.getUniqueIdentifier(), client.getNickname()))
 					return CommandResult.Error;
 				String sql = "UPDATE Tickets SET LastEdit = ?, Comment = ? WHERE TicketID = ? AND SupporterUID = ?";
-				try (PreparedStatement updt = con.prepareStatement(sql))
-				{
+				try (PreparedStatement updt = con.prepareStatement(sql)) {
 					Date date = new Date();
 					Timestamp stamp = new Timestamp(date.getTime());
 					updt.setTimestamp(1, stamp);
 					updt.setString(2, args[1]);
 					updt.setInt(3, ticketID);
 					updt.setString(4, client.getUniqueIdentifier());
-					if (updt.executeUpdate() == 0)
-					{
+					if (updt.executeUpdate() == 0) {
 						_bot.TS3API.sendPrivateMessage(client.getId(), ColoredText.red("Leider konnte das Ticket nicht bearbeitet werden. Bist du sicher, dass es dir gehört?"));
 						return CommandResult.NoErrors;
 					}
@@ -54,32 +47,27 @@ public class SetCommentCommand extends CriticalTicketCommand
 					return CommandResult.NoErrors;
 
 				}
-			} catch (SQLException ex)
-			{
+			} catch (SQLException ex) {
 				LOGGER.error("Error in claiming Ticket.", ex);
 				return CommandResult.Error;
 			}
-		} catch (NumberFormatException ex)
-		{
+		} catch (NumberFormatException ex) {
 			return CommandResult.ArgumentError;
 		}
 	}
 
 	@Override
-	public String getArguments()
-	{
+	public String getArguments() {
 		return "[TicketID] [(Kommentar)]";
 	}
 
 	@Override
-	public String getDescription()
-	{
+	public String getDescription() {
 		return "Ersetzt den Kommentar deines Tickets durch einen neuen.";
 	}
 
 	@Override
-	protected String getDetails()
-	{
+	protected String getDetails() {
 		return ColoredText.green("Beispiel: !scticket 42 \"Ein Kommentar\"");
 	}
 

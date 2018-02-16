@@ -1,17 +1,13 @@
 package main.java.de.frigerius.frostbot;
 
-public class Main
-{
+public class Main {
 
-	public static void main(String[] args)
-	{
+	public static void main(String[] args) {
 		FrostBot _bot = FrostBot.getInstance();
 		_bot.readConfig();
-		if (args.length > 0)
-		{
+		if (args.length > 0) {
 			new MaintenanceBot(args);
-		} else
-		{
+		} else {
 			_bot.start();
 		}
 

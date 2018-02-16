@@ -4,24 +4,19 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import com.github.theholywaffle.teamspeak3.api.wrapper.Client;
 
-public abstract class CriticalTicketCommand extends BaseCommand
-{
+public abstract class CriticalTicketCommand extends BaseCommand {
 	private static ReentrantLock _lock = new ReentrantLock();
 
-	public CriticalTicketCommand(String command, int cmdPwr)
-	{
+	public CriticalTicketCommand(String command, int cmdPwr) {
 		super(command, cmdPwr);
 	}
 
 	@Override
-	protected final CommandResult handleIntern(Client client, String[] args)
-	{
+	protected final CommandResult handleIntern(Client client, String[] args) {
 		_lock.lock();
-		try
-		{
+		try {
 			return sHandleIntern(client, args);
-		} finally
-		{
+		} finally {
 			_lock.unlock();
 		}
 	}

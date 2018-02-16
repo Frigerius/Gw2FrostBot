@@ -4,19 +4,16 @@ import com.github.theholywaffle.teamspeak3.api.wrapper.Client;
 
 import main.java.de.frigerius.frostbot.ClientController;
 
-public class PauseVerifyCommand extends BaseCommand
-{
+public class PauseVerifyCommand extends BaseCommand {
 	ClientController _clientController;
 
-	public PauseVerifyCommand(int cmdPwr)
-	{
+	public PauseVerifyCommand(int cmdPwr) {
 		super("pauseverify", cmdPwr);
 		_clientController = _bot.getClientController();
 	}
 
 	@Override
-	protected CommandResult handleIntern(Client c, String[] args)
-	{
+	protected CommandResult handleIntern(Client c, String[] args) {
 		_clientController.removeSupporter(c.getId());
 		if (_clientController.getActiveSupporter() != null && _clientController.getActiveSupporter().getId() == c.getId())
 			_clientController.setActiveSupporter(null);
@@ -25,21 +22,18 @@ public class PauseVerifyCommand extends BaseCommand
 	}
 
 	@Override
-	public String getArguments()
-	{
+	public String getArguments() {
 
 		return "";
 	}
 
 	@Override
-	public String getDescription()
-	{
+	public String getDescription() {
 		return "Entfernt dich von der Liste der verfügbaren Verifizierer, bis du dies aufhebst, oder dich neu verbindest.";
 	}
 
 	@Override
-	protected String getDetails()
-	{
+	protected String getDetails() {
 		return "";
 	}
 

@@ -23,8 +23,7 @@ import com.github.theholywaffle.teamspeak3.api.wrapper.ServerGroup;
 
 import main.java.de.frigerius.frostbot.commands.Commands;
 
-public class FrostBot
-{
+public class FrostBot {
 	private final Logger LOGGER = LoggerFactory.getLogger(FrostBot.class);
 	private static FrostBot _instance;
 
@@ -50,8 +49,7 @@ public class FrostBot
 
 	private boolean _configurated = false;
 
-	private FrostBot()
-	{
+	private FrostBot() {
 		_instance = this;
 		_tasks = new Tasks();
 		_commands = new Commands();
@@ -65,60 +63,49 @@ public class FrostBot
 		_news = new News("news.txt");
 	}
 
-	public static FrostBot getInstance()
-	{
+	public static FrostBot getInstance() {
 		return _instance == null ? new FrostBot() : _instance;
 	}
 
-	public Tasks getTasks()
-	{
+	public Tasks getTasks() {
 		return _tasks;
 	}
 
-	public Commands getCommands()
-	{
+	public Commands getCommands() {
 		return _commands;
 	}
 
-	public ClientController getClientController()
-	{
+	public ClientController getClientController() {
 		return _clientController;
 	}
 
-	public Events getEvents()
-	{
+	public Events getEvents() {
 		return _events;
 	}
 
-	public AfkMover getAfkMover()
-	{
+	public AfkMover getAfkMover() {
 		return _afkMover;
 	}
 
-	public GuildManager getGuildManager()
-	{
+	public GuildManager getGuildManager() {
 		return _guildManager;
 	}
 
-	public News getNews()
-	{
+	public News getNews() {
 		return _news;
 	}
 
-	public ChannelController getChannelController()
-	{
+	public ChannelController getChannelController() {
 		return _channelController;
 	}
 
-	public ChannelBotCommander getChannelBotCommander()
-	{
+	public ChannelBotCommander getChannelBotCommander() {
 		return _channelBotCommander;
 	}
 
 	// Methos
 
-	public boolean readConfig()
-	{
+	public boolean readConfig() {
 		LOGGER.info("Starting to read config-File...");
 		File config = new File("config.ini");
 		if (!BotSettings.read(config))
@@ -128,61 +115,49 @@ public class FrostBot
 		return true;
 	}
 
-	public boolean start()
-	{
-		try
-		{
+	public boolean start() {
+		try {
 			LOGGER.info("Starting Bot...");
 			if (!_configurated)
 				return false;
 			_guildManager.refresh();
 			_commands.init();
-			if (BotSettings.isAFKMoverEnabled)
-			{
+			if (BotSettings.isAFKMoverEnabled) {
 				LOGGER.info("Adding AfkMover to Tasks...");
 				_afkMover = new AfkMover();
 				_tasks.AddTask(_afkMover);
 			}
 			_connection.init();
 			TS3API.getChannels().onSuccess(channels -> {
-				if (BotSettings.isAFKMoverEnabled)
-				{
+				if (BotSettings.isAFKMoverEnabled) {
 					_afkMover.refreshAFKChannelList(channels);
 				}
 				_channelController.refreshChannelList(channels);
 			});
-			Runtime.getRuntime().addShutdownHook(new Thread()
-			{
+			Runtime.getRuntime().addShutdownHook(new Thread() {
 				@Override
-				public void run()
-				{
+				public void run() {
 					_instance.stop();
 				}
 			});
 			_console.runReadThread();
 			LOGGER.info("FrostBot started.");
-		} catch (Exception e)
-		{
+		} catch (Exception e) {
 			LOGGER.error("Error on startup.", e);
 			return false;
 		}
 		return true;
 	}
 
-	public void stop()
-	{
+	public void stop() {
 		LOGGER.info("FrostBot is shutting down!");
-		try
-		{
-			for (Client c : TS3API.getClients().get())
-			{
-				if (BotSettings.notifyUserIDs.contains(c.getUniqueIdentifier()))
-				{
+		try {
+			for (Client c : TS3API.getClients().get()) {
+				if (BotSettings.notifyUserIDs.contains(c.getUniqueIdentifier())) {
 					TS3API.sendPrivateMessage(c.getId(), "FrostBot is shutting down!");
 				}
 			}
-		} catch (InterruptedException e)
-		{
+		} catch (InterruptedException e) {
 			LOGGER.info("Could not send shutdown message!");
 		}
 		_tasks.stopAll();
@@ -190,14 +165,11 @@ public class FrostBot
 		_channelBotCommander.closeAll();
 	}
 
-	private void onConnected()
-	{
+	private void onConnected() {
 		_events.init();
 		TS3API.getClients().onSuccess(result -> {
-			for (Client c : result)
-			{
-				if (BotSettings.notifyUserIDs.contains(c.getUniqueIdentifier()))
-				{
+			for (Client c : result) {
+				if (BotSettings.notifyUserIDs.contains(c.getUniqueIdentifier())) {
 					TS3API.sendPrivateMessage(c.getId(), "FrostBot connected!");
 				}
 			}
@@ -211,33 +183,26 @@ public class FrostBot
 		});
 	}
 
-	public static Connection getSQLConnection() throws SQLException
-	{
+	public static Connection getSQLConnection() throws SQLException {
 		return DriverManager.getConnection(BotSettings.sqlUrl, BotSettings.sqlUsername, BotSettings.sqlPassword);
 	}
 
-	public void sendBulkMessages(Client c, String initmsg, List<String> msgs)
-	{
+	public void sendBulkMessages(Client c, String initmsg, List<String> msgs) {
 		sendBulkMessages(c.getId(), initmsg, msgs);
 	}
 
-	public void sendBulkMessages(int id, String initmsg, List<String> msgs)
-	{
+	public void sendBulkMessages(int id, String initmsg, List<String> msgs) {
 		List<String> tmp = new LinkedList<String>();
 		int msgSize = 0;
-		if (initmsg != null)
-		{
+		if (initmsg != null) {
 			tmp.add(initmsg);
 			msgSize = tmp.get(0).length();
 		}
 		List<String> toSend = new LinkedList<String>();
-		for (String msg : msgs)
-		{
-			if (msgSize + msg.length() + /*#\n*/(tmp.size() * 2) < 1024)
-			{
+		for (String msg : msgs) {
+			if (msgSize + msg.length() + /* #\n */(tmp.size() * 2) < 1024) {
 				msgSize += msg.length();
-			} else
-			{
+			} else {
 				toSend.add(String.join("\n", tmp));
 				tmp.clear();
 				tmp.add("");
@@ -246,25 +211,20 @@ public class FrostBot
 			tmp.add(msg);
 		}
 		toSend.add(String.join("\n", tmp));
-		for (String msg : toSend)
-		{
+		for (String msg : toSend) {
 			if (msg.length() > 0)
 				TS3API.sendPrivateMessage(id, msg);
 		}
 	}
 
-	public void refreshRankPermissionMaps()
-	{
+	public void refreshRankPermissionMaps() {
 		_permissionLock.lock();
-		try (Connection con = FrostBot.getSQLConnection())
-		{
-			try (Statement stmt = con.createStatement())
-			{
+		try (Connection con = FrostBot.getSQLConnection()) {
+			try (Statement stmt = con.createStatement()) {
 				ResultSet result = stmt.executeQuery("SELECT * FROM ServerGroups");
 				_rankPermissionMap.clear();
 				_userRanks.clear();
-				while (result.next())
-				{
+				while (result.next()) {
 					int id = result.getInt("ID");
 					int cmdPower = result.getInt("CmdPower");
 					boolean isUserRank = result.getBoolean("IsUserRank");
@@ -273,90 +233,68 @@ public class FrostBot
 						_userRanks.add(id);
 				}
 			}
-		} catch (SQLException ex)
-		{
+		} catch (SQLException ex) {
 			LOGGER.error("SQL Error", ex);
-		} finally
-		{
+		} finally {
 			_permissionLock.unlock();
 		}
 	}
 
-	public boolean isUserRank(int rank)
-	{
+	public boolean isUserRank(int rank) {
 		_permissionLock.lock();
-		try
-		{
+		try {
 			return _userRanks.contains(rank);
-		} finally
-		{
+		} finally {
 			_permissionLock.unlock();
 		}
 	}
 
-	public int getCmdPower(int rank)
-	{
+	public int getCmdPower(int rank) {
 		_permissionLock.lock();
-		try
-		{
-			if (_rankPermissionMap.containsKey(rank))
-			{
+		try {
+			if (_rankPermissionMap.containsKey(rank)) {
 				return _rankPermissionMap.get(rank);
 			}
 			return 0;
-		} finally
-		{
+		} finally {
 			_permissionLock.unlock();
 		}
 	}
 
-	private void addRank(int id, boolean isUserRank, int cmdPower)
-	{
+	private void addRank(int id, boolean isUserRank, int cmdPower) {
 		_permissionLock.lock();
-		try
-		{
+		try {
 			_rankPermissionMap.put(id, cmdPower);
 			if (isUserRank)
 				_userRanks.add(id);
-		} finally
-		{
+		} finally {
 			_permissionLock.unlock();
 		}
 	}
 
-	public void removeRank(int id)
-	{
+	public void removeRank(int id) {
 		_permissionLock.lock();
-		try
-		{
+		try {
 			_rankPermissionMap.remove(id);
 			_userRanks.remove(id);
-		} finally
-		{
+		} finally {
 			_permissionLock.unlock();
 		}
 	}
 
-	public boolean addServerGroup(int id, boolean isUserRank)
-	{
+	public boolean addServerGroup(int id, boolean isUserRank) {
 		return addServerGroup(id, isUserRank, 0);
 	}
 
-	public boolean addServerGroup(int id, boolean isUserRank, int cmdPower)
-	{
-		try
-		{
+	public boolean addServerGroup(int id, boolean isUserRank, int cmdPower) {
+		try {
 			List<ServerGroup> groups = TS3API.getServerGroups().get();
-			for (ServerGroup grp : groups)
-			{
-				if (grp.getId() == id)
-				{
-					try (Connection con = getSQLConnection())
-					{
+			for (ServerGroup grp : groups) {
+				if (grp.getId() == id) {
+					try (Connection con = getSQLConnection()) {
 						String insertSQL = "INSERT INTO ServerGroups (ID, Name, IsUserRank, CmdPower) VALUES (?, ?, ?, ?) "
 								+ "ON DUPLICATE KEY UPDATE Name = ?, IsUserRank = ?, CmdPower = ?";
-						try (PreparedStatement stmt = con.prepareStatement(insertSQL))
-						{
+						try (PreparedStatement stmt = con.prepareStatement(insertSQL)) {
 							stmt.setInt(1, id);
 							stmt.setString(2, grp.getName());
 							stmt.setBoolean(3, isUserRank);
@@ -367,28 +305,24 @@ public class FrostBot
 							stmt.executeUpdate();
 							addRank(id, isUserRank, cmdPower);
 						}
-					} catch (SQLException ex)
-					{
+					} catch (SQLException ex) {
 						LOGGER.error("SQL Error", ex);
 					}
 				}
 			}
 			return true;
-		} catch (InterruptedException e)
-		{
+		} catch (InterruptedException e) {
 			LOGGER.error("InterruptException on add ServerGroups");
 			return false;
 		}
 	}
 
-	public boolean isValidAPIKey(String key)
-	{
+	public boolean isValidAPIKey(String key) {
 		int[] lengths = { 8, 4, 4, 4, 20, 4, 4, 4, 12 };
 		String[] split = key.split("-");
 		if (lengths.length != split.length)
 			return false;
-		for (int i = 0; i < lengths.length; i++)
-		{
+		for (int i = 0; i < lengths.length; i++) {
 			if (split[i].length() != lengths[i])
 				return false;
 		}

@@ -1,6 +1,8 @@
 package main.java.de.frigerius.frostbot.Extensions;
 
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map.Entry;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.github.theholywaffle.teamspeak3.api.event.TextMessageEvent;
@@ -9,10 +11,8 @@ import com.github.theholywaffle.teamspeak3.api.wrapper.Client;
 import main.java.de.frigerius.frostbot.ChannelBot;
 import main.java.de.frigerius.frostbot.IChannelBotExtension;
 
-public class SurveyExtension implements IChannelBotExtension
-{
-	enum Vote
-	{
+public class SurveyExtension implements IChannelBotExtension {
+	enum Vote {
 		Pro, Contra, DontCare
 	}
 
@@ -23,14 +23,14 @@ public class SurveyExtension implements IChannelBotExtension
 	private boolean _isSurveyOpen = false;
 	private Runnable _onExit;
 	private String _surveyText;
+	private final String _helpMessage;
 
-	public SurveyExtension(Runnable onExit, String surveyText)
-	{
+	public SurveyExtension(Runnable onExit, String surveyText) {
 		_onExit = onExit;
 		_surveyText = surveyText;
 		// Pro
 		_possibleVotes.put("+", Vote.Pro);
-		_possibleVotes.put("!pro", Vote.Pro);
+		_possibleVotes.put("pro", Vote.Pro);
 		_possibleVotes.put("ja", Vote.Pro);
 		_possibleVotes.put("yes", Vote.Pro);
 		_possibleVotes.put("y", Vote.Pro);
@@ -40,59 +40,50 @@ public class SurveyExtension implements IChannelBotExtension
 		_possibleVotes.put("nein", Vote.Contra);
 		_possibleVotes.put("no", Vote.Contra);
 		_possibleVotes.put("n", Vote.Contra);
-		_possibleVotes.put("!con", Vote.Contra);
+		_possibleVotes.put("con", Vote.Contra);
 		// Egal
 		_possibleVotes.put("=", Vote.DontCare);
-		_possibleVotes.put("!dc", Vote.DontCare);
+		_possibleVotes.put("dc", Vote.DontCare);
 		_possibleVotes.put("egal", Vote.DontCare);
 		_possibleVotes.put("mir egal", Vote.DontCare);
+
+		_helpMessage = createHelpMessage();
 	}
 
-	public void StartNewSurvey(String text)
-	{
+	public void StartNewSurvey(String text) {
 		_lock.lock();
-		try
-		{
+		try {
 			if (_isSurveyOpen)
 				CloseSurvey();
 			// Start
 			_isSurveyOpen = true;
 			_surveyText = text;
 			String noMsg = String.format("%s hat eine Umfrage gestartet.", _bot.getOwner().getName());
-			if (text.length() > 0)
-			{
-				if (text.length() + noMsg.length() + /* \n */2 < 1024)
-				{
+			if (text.length() > 0) {
+				if (text.length() + noMsg.length() + /* \n */2 < 1024) {
 					_bot.TS3API.sendChannelMessage(String.format("%s hat eine Umfrage gestartet:\n%s", _bot.getOwner().getName(), text));
-				} else
-				{
+				} else {
 					_bot.TS3API.sendChannelMessage(String.format("%s hat eine Umfrage gestartet:", _bot.getOwner().getName()));
 					_bot.TS3API.sendChannelMessage(text);
 				}
-			} else
-			{
+			} else {
 				_bot.TS3API.sendChannelMessage(noMsg);
 			}
-		} finally
-		{
+		} finally {
 			_lock.unlock();
 		}
 	}
 
-	public void CloseSurvey()
-	{
+	public void CloseSurvey() {
 		_lock.lock();
-		try
-		{
-			if (_isSurveyOpen)
-			{
+		try {
+			if (_isSurveyOpen) {
 				_isSurveyOpen = false;
 				_bot.TS3API.sendChannelMessage("Die Umfrage ist nun beendet.");
 				int pros = 0;
 				int cons = 0;
 				int dc = 0;
-				for (Vote vote : _votes.values())
-				{
+				for (Vote vote : _votes.values()) {
 					if (vote == Vote.Pro)
 						pros++;
 					if (vote == Vote.Contra)
@@ -102,77 +93,86 @@ public class SurveyExtension implements IChannelBotExtension
 				}
 				_bot.TS3API.sendChannelMessage(String.format("Die Umfrage ergab:\nDafür: %d\nDagegen: %d\nEnthaltungen: %d", pros, cons, dc));
 			}
-		} finally
-		{
+		} finally {
 			_lock.unlock();
 		}
 	}
 
 	@Override
-	public void handleClientCommand(String cmd, Client c)
-	{
+	public void handleClientCommand(String cmd, Client c) {
 		_lock.lock();
-		try
-		{
+		try {
 			if (!_isSurveyOpen)
 				return;
-			if (cmd.startsWith("!") && c.getUniqueIdentifier().equals(_bot.getOwner().getUID()))
-			{
-				if (cmd.equals("!close"))
-				{
+			if (cmd.startsWith("!") && c.getUniqueIdentifier().equals(_bot.getOwner().getUID())) {
+				if (cmd.equals("!close")) {
 					CloseSurvey();
 					return;
 				}
 			}
 			String UID = c.getUniqueIdentifier();
-			if (!_votes.containsKey(UID))
-			{
+			if (!_votes.containsKey(UID)) {
 				Vote vote = _possibleVotes.get(cmd);
-				if (vote != null)
-				{
+				if (vote != null) {
 					_votes.put(UID, vote);
 				}
 			}
-		} finally
-		{
+		} finally {
 			_lock.unlock();
 		}
 	}
 
 	@Override
-	public void handleRawMessage(final TextMessageEvent e)
-	{
+	public void handleRawMessage(final TextMessageEvent e) {
 		_lock.lock();
-		try
-		{
-			if (e.getMessage().length() < 10 && _isSurveyOpen)
-			{
+		try {
+			if (e.getMessage().length() < 10 && _isSurveyOpen) {
 				_bot.TS3API.getClientInfo(e.getInvokerId()).onSuccess(c -> {
 					handleClientCommand(e.getMessage(), c);
 				});
 			}
-		} finally
-		{
+		} finally {
 			_lock.unlock();
 		}
 	}
 
 	@Override
-	public void onConnected()
-	{
+	public void onConnected() {
+		_bot.TS3API.sendChannelMessage(_helpMessage);
 		StartNewSurvey(_surveyText);
 	}
 
+	private String createHelpMessage() {
+		LinkedList<String> proList = new LinkedList<>();
+		LinkedList<String> conList = new LinkedList<>();
+		LinkedList<String> dcList = new LinkedList<>();
+		for (Entry<String, Vote> entry : _possibleVotes.entrySet()) {
+			switch (entry.getValue()) {
+			case Pro:
+				proList.add(entry.getKey());
+				break;
+			case Contra:
+				conList.add(entry.getKey());
+				break;
+			case DontCare:
+				dcList.add(entry.getKey());
+				break;
+			}
+		}
+		String pro = String.join(", ", proList);
+		String con = String.join(", ", conList);
+		String dc = String.join(", ", dcList);
+		return String.format("Hey Leute, mögliche Antworten auf eine Umfrage sind:\nDafür: %s\nDagegen: %s\nEnthaltung: %s", pro, con, dc);
+	}
+
 	@Override
-	public void setBot(ChannelBot bot)
-	{
+	public void setBot(ChannelBot bot) {
 		_bot = bot;
 
 	}
 
 	@Override
-	public void onBeforeClose()
-	{
+	public void onBeforeClose() {
 		CloseSurvey();
 		if (_onExit != null)
 			_onExit.run();

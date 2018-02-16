@@ -5,24 +5,18 @@ import com.github.theholywaffle.teamspeak3.api.wrapper.Client;
 import main.java.de.frigerius.frostbot.ColoredText;
 import main.java.de.frigerius.frostbot.MyClient;
 
-public class LeaveGuildCommand extends RequestingBaseGuildCommand
-{
+public class LeaveGuildCommand extends RequestingBaseGuildCommand {
 
-	public LeaveGuildCommand(int cmdPwr)
-	{
+	public LeaveGuildCommand(int cmdPwr) {
 		super("leaveguild", cmdPwr);
 	}
 
 	@Override
-	protected CommandResult handleIntern(Client client, String[] args)
-	{
-		if (AddRequester(client.getUniqueIdentifier()))
-		{
-			try
-			{
+	protected CommandResult handleIntern(Client client, String[] args) {
+		if (AddRequester(client.getUniqueIdentifier())) {
+			try {
 				_guildManager.LeaveGuild(client);
-			} finally
-			{
+			} finally {
 				RemoveRequester(client.getUniqueIdentifier());
 			}
 
@@ -31,26 +25,22 @@ public class LeaveGuildCommand extends RequestingBaseGuildCommand
 	}
 
 	@Override
-	public boolean hasClientRights(Client client,int cmdPwr)
-	{
+	public boolean hasClientRights(Client client, int cmdPwr) {
 		return MyClient.HasCmdPower(client.getServerGroups(), getCmdPwr());
 	}
 
 	@Override
-	public String getArguments()
-	{
+	public String getArguments() {
 		return "";
 	}
 
 	@Override
-	public String getDescription()
-	{
+	public String getDescription() {
 		return "Du verlässt die ServerGruppe deiner gilde.";
 	}
 
 	@Override
-	protected String getDetails()
-	{
+	protected String getDetails() {
 		return ColoredText.green(String.format("Beispiel: !%s 42", getCommand()));
 	}
 

@@ -17,8 +17,7 @@ import main.java.de.frigerius.frostbot.ColoredText;
 import main.java.de.frigerius.frostbot.FrostBot;
 import main.java.de.frigerius.frostbot.commands.BaseCommand.CommandResult;
 
-public class Commands
-{
+public class Commands {
 	public final Map<String, BaseCommand> commands = new HashMap<>();
 	public final Map<String, BaseCommand> consoleCommands = new HashMap<>();
 	public final List<String> sortedCommands = new ArrayList<>();
@@ -36,32 +35,27 @@ public class Commands
 	public static final int EveryoneLevel = 0;
 	private FrostBot _bot;
 
-	public Commands()
-	{
+	public Commands() {
 		_bot = FrostBot.getInstance();
 	}
 
-	public void init()
-	{
+	public void init() {
 		LOGGER.info("Initializing Commands...");
 		createDefaultCommands();
 		LOGGER.info("Commands Initialized.");
 	}
 
-	private void registerCommand(BaseCommand command)
-	{
+	private void registerCommand(BaseCommand command) {
 		commands.put("!" + command.getCommand().toLowerCase(), command);
 		sortedCommands.add("!" + command.getCommand().toLowerCase());
 	}
 
-	private void registerConsoleCommand(BaseCommand command)
-	{
+	private void registerConsoleCommand(BaseCommand command) {
 		consoleCommands.put(command.getCommand().toLowerCase(), command);
 		sortedConsoleCommands.add(command.getCommand().toLowerCase());
 	}
 
-	private void createDefaultCommands()
-	{
+	private void createDefaultCommands() {
 		registerCommand(new HelpCommand(EveryoneLevel, this));
 		registerCommand(new InfoCommand("homepage", EveryoneLevel, "[url]" + BotSettings.homepage + "[/url]", "Gibt den Link zur Hompage an."));
 		// Verifizierung
@@ -70,6 +64,7 @@ public class Commands
 		registerCommand(new HelpVerify(SupporterLevel));
 		registerCommand(new PauseVerifyCommand(SupporterLevel));
 		registerCommand(new ResumeVerifyCommand(SupporterLevel));
+		registerCommand(new ClientCountPerGroupCommand(SupporterLevel));
 		// Events
 		registerCommand(new ListEventsCommand(EveryoneLevel));
 		registerCommand(new JoinEventCommand(UserLevel));
@@ -131,8 +126,7 @@ public class Commands
 		registerConsoleCommand(new OfflineResetForumVerifyCommand(0));
 	}
 
-	public String getDetailedDescription(Client c, String cmd)
-	{
+	public String getDetailedDescription(Client c, String cmd) {
 		BaseCommand command = commands.get(cmd);
 		if (command == null)
 			return ColoredText.red("Befehl konnte nicht gefunden werden.");
@@ -142,14 +136,12 @@ public class Commands
 			return ColoredText.red("Leider fehlen dir die nötigen Rechte für diese Information.");
 	}
 
-	public void handleClientCommand(String cmd, Client c)
-	{
+	public void handleClientCommand(String cmd, Client c) {
 		if (c == null)
 			return;
 		Matcher m = _pattern.matcher(cmd);
 		String command = extractCommand(m);
-		if (command == null)
-		{
+		if (command == null) {
 			LOGGER.warn(String.format("%s: %s (No Command Found!)", c.getNickname(), cmd));
 			_bot.TS3API.sendPrivateMessage(c.getId(), ColoredText.red("Ungültiger Befehl."));
 			return;
@@ -157,14 +149,11 @@ public class Commands
 		String[] args = new String[0];
 		List<String> largs = new ArrayList<String>();
 		StringBuilder sb = new StringBuilder();
-		while (m.find())
-		{
-			if (m.group("param") != null)
-			{
+		while (m.find()) {
+			if (m.group("param") != null) {
 				sb.append(" \"").append(m.group("param")).append("\"");
 				largs.add(m.group("param"));
-			} else
-			{
+			} else {
 				sb.append(" \"").append(m.group("param2")).append("\"");
 				largs.add(m.group("param2"));
 			}
@@ -175,16 +164,13 @@ public class Commands
 		LOGGER.info(String.format("%s: %s%s", c.getNickname(), command, sb.toString()));
 
 		BaseCommand baseCommand = null;
-		if (commands.containsKey(command))
-		{
+		if (commands.containsKey(command)) {
 			baseCommand = commands.get(command);
 		}
 
-		if (baseCommand != null)
-		{
+		if (baseCommand != null) {
 			BaseCommand.CommandResult result = baseCommand.handle(c, args);
-			if (result == CommandResult.Error)
-			{
+			if (result == CommandResult.Error) {
 				_bot.TS3API.sendPrivateMessage(c.getId(), ColoredText.red("Beim ausführen des Befehls ist ein Fehler aufgetreten"));
 			}
 			if (result == CommandResult.InvalidPermissions)
@@ -192,45 +178,37 @@ public class Commands
 			if (result == CommandResult.ArgumentError)
 				_bot.TS3API.sendPrivateMessage(c.getId(), ColoredText.red("Dein Befehl hat eine ungültige Signatur.\n") + ColoredText.green(baseCommand.getDetailedDescription()));
 			LOGGER.info(String.format("%s: %s%s (%s)", c.getNickname(), command, sb.toString(), result));
-		} else
-		{
+		} else {
 			LOGGER.info(String.format("%s: %s%s (%s)", c.getNickname(), command, sb.toString(), "Unknown Command"));
 			_bot.TS3API.sendPrivateMessage(c.getId(), ColoredText.red("Unbekannter Befehl."));
 		}
 	}
 
-	private String extractCommand(Matcher m)
-	{
+	private String extractCommand(Matcher m) {
 		if (m.find())
 			return m.group("command");
 		else
 			return null;
 	}
 
-	public void handleConsoleCommand(String cmd)
-	{
+	public void handleConsoleCommand(String cmd) {
 		Matcher m = _consolePattern.matcher(cmd);
 		String command = extractCommand(m);
-		if (command == null)
-		{
+		if (command == null) {
 			return;
 		}
 		String[] args = new String[0];
 		List<String> largs = new ArrayList<String>();
-		while (m.find())
-		{
-			if (m.group("param") != null)
-			{
+		while (m.find()) {
+			if (m.group("param") != null) {
 				largs.add(m.group("param"));
-			} else
-			{
+			} else {
 				largs.add(m.group("param2"));
 			}
 		}
 		args = largs.toArray(new String[largs.size()]);
 		command = command.toLowerCase();
-		if (consoleCommands.containsKey(command))
-		{
+		if (consoleCommands.containsKey(command)) {
 			LOGGER.info(consoleCommands.get(command).handle(null, args).toString());
 		}
 	}

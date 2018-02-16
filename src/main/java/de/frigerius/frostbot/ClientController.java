@@ -19,8 +19,7 @@ import com.github.theholywaffle.teamspeak3.api.wrapper.Client;
 
 import main.java.de.frigerius.frostbot.commands.Commands;
 
-public class ClientController
-{
+public class ClientController {
 	private final Logger LOGGER = LoggerFactory.getLogger(ClientController.class);
 	private FrostBot _bot;
 	private final ConcurrentHashMap<Integer, MyClient> _supporter = new ConcurrentHashMap<>();
@@ -29,62 +28,50 @@ public class ClientController
 	private MyClient _activeSupporter = null;
 	private ReentrantLock _activeSupLock = new ReentrantLock();
 
-	public ClientController()
-	{
+	public ClientController() {
 		_bot = FrostBot.getInstance();
 	}
 
-	public void clientJoined(ClientJoinEvent clientEvent)
-	{
-		if (checkVerify(clientEvent))
-		{
+	public void clientJoined(ClientJoinEvent clientEvent) {
+		if (checkVerify(clientEvent)) {
 			// Logger.info(String.format("Welcome message will be send to %s : %s.", e.getClientId(), e.getClientNickname()));
 			_bot.TS3API.sendPrivateMessage(clientEvent.getClientId(), makeVerifyMessage()).onFailure(result -> {
 				LOGGER.error(String.format("Failed to send message to %s.", clientEvent.getClientNickname()));
 			});
-		} else
-		{
+		} else {
 			List<String> msgs = new LinkedList<String>();
-			if (!MyClient.isInServerGroup(clientEvent.getClientServerGroups(), BotSettings.ignoreMeGroup))
-			{
+			if (!MyClient.isInServerGroup(clientEvent.getClientServerGroups(), BotSettings.ignoreMeGroup)) {
 				String msg = _bot.getNews().getMsg();
 				msgs.add(String.format("Willkommen auf dem TeamSpeak-Server von %s. Schreibe !help, wenn du eine Übersicht über deine Befehle erhalten möchtest.%s",
 						BotSettings.serverName, msg.equals("") ? "" : "\n" + msg));
 			}
 
-			if (MyClient.isInServerGroup(MyClient.makeStringToServerGroups(clientEvent.getClientServerGroups()), BotSettings.supporterGroups))
-			{
+			if (MyClient.isInServerGroup(MyClient.makeStringToServerGroups(clientEvent.getClientServerGroups()), BotSettings.supporterGroups)) {
 				addSupporter(new MyClient(clientEvent));
 			}
 
 			int eventCount = WvWEvents.GetCurrentEventCount();
-			if (eventCount > 1)
-			{
+			if (eventCount > 1) {
 				msgs.add(String.format("Aktuell finden " + ColoredText.green("%d") + " Events statt. Schreibe " + ColoredText.green("!listevents") + " für mehr Details.",
 						eventCount));
-			} else if (eventCount == 1)
-			{
+			} else if (eventCount == 1) {
 				msgs.add(String.format("Aktuell findet " + ColoredText.green("ein") + " Event statt. Schreibe " + ColoredText.green("!listevents") + " für mehr Details.",
 						eventCount));
 			}
 			int[] serverGroups = MyClient.makeStringToServerGroups(clientEvent.getClientServerGroups());
-			if (MyClient.HasGreaterOrEqualCmdPower(serverGroups, 45))
-			{
+			if (MyClient.HasGreaterOrEqualCmdPower(serverGroups, 45)) {
 				int count = checkTickets(clientEvent);
 				if (count > 0)
 					msgs.add(String.format("Anzahl offener Tickets: [color=green]%s[/color]", count));
 			}
-			if(MyClient.HasGreaterOrEqualCmdPower(serverGroups, Commands.Sub1AdminLevel))
-			{
+			if (MyClient.HasGreaterOrEqualCmdPower(serverGroups, Commands.Sub1AdminLevel)) {
 				int count = 0;
-				try
-				{
+				try {
 					count = _bot.TS3API.getComplaints().get().size();
-				} catch (InterruptedException e)
-				{
+				} catch (InterruptedException e) {
 					msgs.add(ColoredText.red("Anzahl der Beschwerden konnte nicht angefragt werden."));
 				}
-				if(count > 0) {
+				if (count > 0) {
 					msgs.add(String.format("Anzahl der Beschwerden: [color=green]%s[/color]", count));
 				}
 			}
@@ -92,29 +79,23 @@ public class ClientController
 		}
 	}
 
-	private int checkTickets(ClientJoinEvent clientEvent)
-	{
-		try (Connection con = FrostBot.getSQLConnection())
-		{
+	private int checkTickets(ClientJoinEvent clientEvent) {
+		try (Connection con = FrostBot.getSQLConnection()) {
 			String sql = "SELECT Count(*) FROM Tickets WHERE State = 'Open' OR (State = 'InProgress' AND SupporterUID = ?)";
-			try (PreparedStatement stmt = con.prepareStatement(sql))
-			{
+			try (PreparedStatement stmt = con.prepareStatement(sql)) {
 				stmt.setString(1, clientEvent.getUniqueClientIdentifier());
 				ResultSet result = stmt.executeQuery();
-				if (result.next())
-				{
+				if (result.next()) {
 					return result.getInt(1);
 				}
 			}
-		} catch (SQLException e)
-		{
+		} catch (SQLException e) {
 			LOGGER.error("Error requesting open Tickets", e);
 		}
 		return 0;
 	}
 
-	public void clientLeft(ClientLeaveEvent e)
-	{
+	public void clientLeft(ClientLeaveEvent e) {
 		int id = e.getClientId();
 		_needsSupport.remove(id);
 		AfkMover afkMover = _bot.getAfkMover();
@@ -123,65 +104,52 @@ public class ClientController
 		_supporter.remove(id);
 		_afkCmdMap.remove(id);
 		_activeSupLock.lock();
-		try
-		{
+		try {
 			if (_activeSupporter.getId() == id)
 				_activeSupporter = null;
-		} finally
-		{
+		} finally {
 			_activeSupLock.unlock();
 		}
 	}
 
-	public static boolean checkVerify(ClientJoinEvent clientEvent)
-	{
+	public static boolean checkVerify(ClientJoinEvent clientEvent) {
 		return checkVerify(MyClient.makeStringToServerGroups(clientEvent.getClientServerGroups()));
 	}
 
-	private static boolean checkVerify(int[] groups)
-	{
+	private static boolean checkVerify(int[] groups) {
 		return MyClient.isInServerGroup(groups, BotSettings.guestGroup) || MyClient.isInServerGroup(groups, BotSettings.removeGroupIdOnVerify);
 	}
 
-	private String makeVerifyMessage()
-	{
+	private String makeVerifyMessage() {
 		return String.format("Willkommen auf dem TeamSpeak-Server von %s.\n"
 				+ "Für den Erhalt einer Servergruppe hast du zwei Möglichkeiten, entweder lässt du dich von einem Verifizierer verifizieren, "
 				+ "oder du nutzt die automatische Verifizierung. Für mehr Infos, tippe bitte den Befehl \"!help verify\" ein.", BotSettings.serverName);
 	}
 
-	public void refreshUsers(List<Client> clients)
-	{
+	public void refreshUsers(List<Client> clients) {
 		_supporter.clear();
 		LinkedList<MyClient> stillAFK = new LinkedList<>();
 		LinkedList<MyClient> needsHelp = new LinkedList<>();
 		AfkMover afkMover = _bot.getAfkMover();
-		for (Client client : clients)
-		{
+		for (Client client : clients) {
 			String UID = client.getUniqueIdentifier();
-			if (!UID.equals(BotSettings.myUID))
-			{
+			if (!UID.equals(BotSettings.myUID)) {
 				int clientId = client.getId();
 
-				if (afkMover != null)
-				{
+				if (afkMover != null) {
 					MyClient c = afkMover.getClient(clientId);
-					if (c != null)
-					{
+					if (c != null) {
 						if (c.getUID().equals(UID))
 							stillAFK.add(c);
 					}
 				}
-				if (_needsSupport.containsKey(client.getId()))
-				{
+				if (_needsSupport.containsKey(client.getId())) {
 					MyClient c = _needsSupport.get(clientId);
 					if (c.getUID().equals(UID))
 						needsHelp.add(c);
 				}
-				if (BotSettings.supporterGroups.size() > 0)
-				{
-					if (MyClient.isInServerGroup(client.getServerGroups(), BotSettings.supporterGroups))
-					{
+				if (BotSettings.supporterGroups.size() > 0) {
+					if (MyClient.isInServerGroup(client.getServerGroups(), BotSettings.supporterGroups)) {
 						MyClient toAdd = new MyClient(client);
 						_supporter.put(toAdd.getId(), toAdd);
 					}
@@ -191,118 +159,93 @@ public class ClientController
 		if (afkMover != null)
 			afkMover.refreshAfks(stillAFK);
 		_needsSupport.clear();
-		for (MyClient client : needsHelp)
-		{
+		for (MyClient client : needsHelp) {
 			_needsSupport.put(client.getId(), client);
 		}
 	}
 
-	public void addSupporter(MyClient c)
-	{
+	public void addSupporter(MyClient c) {
 		_supporter.put(c.getId(), c);
 		// Logger.info(c.getName() + " was added to List of supporters.");
 		int helpSize = _needsSupport.size();
-		if (helpSize > 0)
-		{
+		if (helpSize > 0) {
 			String msg = "";
-			if (helpSize == 1)
-			{
+			if (helpSize == 1) {
 				msg = String.format("%s benötigt deine Hilfe.", ColoredText.green(_needsSupport.values().iterator().next().getName()));
-			} else
-			{
+			} else {
 				msg = String.format("Es benötigen %s Personen deine Hilfe.", ColoredText.green("" + _needsSupport.size()));
 			}
 			_bot.TS3API.sendPrivateMessage(c.getId(), String.format("Hallo %s. %s Bitte antworte mir mit !helpverify, wenn du gerade Zeit hast.", c.getName(), msg));
 		}
 	}
 
-	public void removeSupporter(int id)
-	{
+	public void removeSupporter(int id) {
 		_supporter.remove(id);
 	}
 
-	public void addAfk(MyClient client)
-	{
+	public void addAfk(MyClient client) {
 		_afkCmdMap.put(client.getId(), client);
 	}
 
-	public void addAfk(Client client)
-	{
-		if (_afkCmdMap.containsKey(client.getId()))
-		{
+	public void addAfk(Client client) {
+		if (_afkCmdMap.containsKey(client.getId())) {
 			_afkCmdMap.get(client.getId()).setLastChannelId(client.getChannelId());
-		} else
-		{
+		} else {
 			_afkCmdMap.put(client.getId(), new MyClient(client));
 		}
 	}
 
-	public MyClient removeAfk(int id)
-	{
+	public MyClient removeAfk(int id) {
 		return _afkCmdMap.remove(id);
 	}
 
-	public boolean isSupportNeeded()
-	{
+	public boolean isSupportNeeded() {
 		return _needsSupport.size() > 0;
 	}
 
-	public Collection<MyClient> getHelpRequests()
-	{
+	public Collection<MyClient> getHelpRequests() {
 		return _needsSupport.values();
 	}
 
-	public void clearHelpRequests()
-	{
+	public void clearHelpRequests() {
 		_needsSupport.clear();
 	}
 
-	public Collection<MyClient> getSupporter()
-	{
+	public Collection<MyClient> getSupporter() {
 		return _supporter.values();
 	}
 
-	public MyClient findHelpRequester(int id)
-	{
+	public MyClient findHelpRequester(int id) {
 		return _needsSupport.get(id);
 	}
 
-	public void removeHelpRequester(int id)
-	{
+	public void removeHelpRequester(int id) {
 		_needsSupport.remove(id);
 	}
 
-	public void addHelpRequester(MyClient client)
-	{
+	public void addHelpRequester(MyClient client) {
 		_needsSupport.put(client.getId(), client);
 	}
 
-	public MyClient getActiveSupporter()
-	{
+	public MyClient getActiveSupporter() {
 		_activeSupLock.lock();
-		try
-		{
+		try {
 			return _activeSupporter;
-		} finally
-		{
+		} finally {
 			_activeSupLock.unlock();
 		}
 	}
 
-	public void setActiveSupporter(MyClient client)
-	{
+	public void setActiveSupporter(MyClient client) {
 		_activeSupLock.lock();
-		try
-		{
+		try {
 			_activeSupporter = client;
-		} finally
-		{
+		} finally {
 			_activeSupLock.unlock();
 		}
 	}
 
-	public MyClient getSupporter(int id)
-	{
+	public MyClient getSupporter(int id) {
 		return _supporter.get(id);
 	}
 

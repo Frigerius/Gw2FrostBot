@@ -11,14 +11,12 @@ import main.java.de.frigerius.frostbot.MyClient;
  * 
  * @author Vinzenz
  */
-public abstract class BaseCommand
-{
+public abstract class BaseCommand {
 	private final String _command;
 	private final int _cmdPwr;
 	protected FrostBot _bot;
 
-	protected BaseCommand(String command, int cmdPwr)
-	{
+	protected BaseCommand(String command, int cmdPwr) {
 		_command = command;
 		_cmdPwr = cmdPwr;
 		_bot = FrostBot.getInstance();
@@ -30,8 +28,7 @@ public abstract class BaseCommand
 	 * @author Vinzenz
 	 * 
 	 */
-	public enum CommandResult
-	{
+	public enum CommandResult {
 		/**
 		 * Command handled without any errors.
 		 */
@@ -64,8 +61,7 @@ public abstract class BaseCommand
 	/**
 	 * @return Command
 	 */
-	public final String getCommand()
-	{
+	public final String getCommand() {
 		return _command;
 	}
 
@@ -79,10 +75,8 @@ public abstract class BaseCommand
 	 *         2 - invalid permission<br/>
 	 *         3 - wrong format
 	 */
-	public final CommandResult handle(Client client, String[] args)
-	{
-		if (hasClientRights(client))
-		{
+	public final CommandResult handle(Client client, String[] args) {
+		if (hasClientRights(client)) {
 			return handleIntern(client, args);
 		}
 		return CommandResult.InvalidPermissions;
@@ -95,27 +89,23 @@ public abstract class BaseCommand
 	 *            Requestor
 	 * @return true if User can use this command, false else.
 	 */
-	public boolean hasClientRights(Client client, int cmdPwr)
-	{
+	public boolean hasClientRights(Client client, int cmdPwr) {
 		if (cmdPwr < 0)
 			return client == null || MyClient.HasGreaterOrEqualCmdPower(client.getServerGroups(), _cmdPwr);
 		else
 			return client == null || cmdPwr >= _cmdPwr;
 	}
 
-	public boolean hasClientRights(Client client)
-	{
+	public boolean hasClientRights(Client client) {
 		return hasClientRights(client, -1);
 	}
 
 	/**
 	 * @return Full command with arguments.
 	 */
-	public String getFullCommand()
-	{
+	public String getFullCommand() {
 		String com = "!" + _command;
-		if (getArguments() == "")
-		{
+		if (getArguments() == "") {
 			return com;
 		}
 		return String.format("%1$s %2$s", com, getArguments());
@@ -134,8 +124,7 @@ public abstract class BaseCommand
 	/**
 	 * @return full formated command with description etc.
 	 */
-	public final String getDetailedDescription()
-	{
+	public final String getDetailedDescription() {
 		return String.format("!%s:\n%s\n%s\n%s", _command, getDescription(), ColoredText.green(getFullCommand()), getDetails());
 	}
 
@@ -147,8 +136,7 @@ public abstract class BaseCommand
 	/**
 	 * @return needed power to use this command.
 	 */
-	public final int getCmdPwr()
-	{
+	public final int getCmdPwr() {
 		return _cmdPwr;
 	}
 }

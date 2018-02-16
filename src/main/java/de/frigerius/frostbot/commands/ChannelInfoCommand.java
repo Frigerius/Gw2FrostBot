@@ -12,31 +12,24 @@ import com.github.theholywaffle.teamspeak3.api.wrapper.Permission;
 
 import main.java.de.frigerius.frostbot.ServerInfo;
 
-public class ChannelInfoCommand extends BaseCommand
-{
+public class ChannelInfoCommand extends BaseCommand {
 	private final Logger LOGGER = LoggerFactory.getLogger(ChannelInfoCommand.class);
 
-	public ChannelInfoCommand(int cmdPwr)
-	{
+	public ChannelInfoCommand(int cmdPwr) {
 		super("getcinfo", cmdPwr);
 	}
 
-	private void consoleCommandGetChannelInfo(int id)
-	{
+	private void consoleCommandGetChannelInfo(int id) {
 		_bot.TS3API.getChannels().onSuccess(channels -> {
-			for (Channel ch : channels)
-			{
-				if (ch.getId() == id)
-				{
+			for (Channel ch : channels) {
+				if (ch.getId() == id) {
 					LOGGER.info(ch.getName() + " : " + ch.getId());
 					Map<String, String> map = ch.getMap();
-					for (Entry<String, String> entry : map.entrySet())
-					{
+					for (Entry<String, String> entry : map.entrySet()) {
 						LOGGER.info(entry.getKey() + " : " + entry.getValue());
 					}
 					_bot.TS3API.getChannelPermissions(id).onSuccess(result -> {
-						for (Permission perm : result)
-						{
+						for (Permission perm : result) {
 							LOGGER.info(perm.getName() + " : " + perm.getValue());
 						}
 					});
@@ -47,8 +40,7 @@ public class ChannelInfoCommand extends BaseCommand
 	}
 
 	@Override
-	protected CommandResult handleIntern(Client c, String[] args)
-	{
+	protected CommandResult handleIntern(Client c, String[] args) {
 		if (args.length == 0)
 			ServerInfo.getChannelIds();
 		else
@@ -57,20 +49,17 @@ public class ChannelInfoCommand extends BaseCommand
 	}
 
 	@Override
-	public String getArguments()
-	{
+	public String getArguments() {
 		return "";
 	}
 
 	@Override
-	public String getDescription()
-	{
+	public String getDescription() {
 		return "";
 	}
 
 	@Override
-	protected String getDetails()
-	{
+	protected String getDetails() {
 		// TODO Auto-generated method stub
 		return "";
 	}

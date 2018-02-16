@@ -14,40 +14,32 @@ import com.github.theholywaffle.teamspeak3.api.wrapper.Client;
 
 import main.java.de.frigerius.frostbot.FrostBot;
 
-public class TicketCommand extends BaseCommand
-{
+public class TicketCommand extends BaseCommand {
 	private final Logger LOGGER = LoggerFactory.getLogger(TicketCommand.class);
 
-	public TicketCommand(int cmdPwr)
-	{
+	public TicketCommand(int cmdPwr) {
 		super("ticket", cmdPwr);
 	}
 
 	@Override
-	protected CommandResult handleIntern(Client client, String[] args)
-	{
+	protected CommandResult handleIntern(Client client, String[] args) {
 		if (args.length != 1)
 			return CommandResult.ArgumentError;
 		int ticketID = 0;
-		try
-		{
+		try {
 			ticketID = Integer.parseInt(args[0]);
-		} catch (NumberFormatException e)
-		{
+		} catch (NumberFormatException e) {
 			return CommandResult.ArgumentError;
 		}
-		try (Connection con = FrostBot.getSQLConnection())
-		{
+		try (Connection con = FrostBot.getSQLConnection()) {
 			String sql = "SELECT TicketID, State, Message, rUsers.UserName, sUsers.UserName , Comment "
 					+ "FROM Tickets LEFT JOIN Users rUsers ON Tickets.RequestorUID = rUsers.UserUID LEFT JOIN Users sUsers ON Tickets.SupporterUID = sUsers.UserUID "
 					+ "WHERE TicketID = ?";
 
-			try (PreparedStatement sel = con.prepareStatement(sql))
-			{
+			try (PreparedStatement sel = con.prepareStatement(sql)) {
 				sel.setInt(1, ticketID);
 				ResultSet set = sel.executeQuery();
-				if (set.next())
-				{
+				if (set.next()) {
 
 					String requestor = set.getString("rUsers.UserName");
 					String supporter = set.getString("sUsers.UserName");
@@ -65,16 +57,14 @@ public class TicketCommand extends BaseCommand
 						_bot.sendBulkMessages(client.getId(), String.format("Ticket: %s", id), texts);
 					else
 						LOGGER.info(String.format("Ticket: %s\n%s", id, String.join("\n", texts)));
-				} else
-				{
+				} else {
 					if (client != null)
 						_bot.TS3API.sendPrivateMessage(client.getId(), "Das gesuchte Ticket existiert nicht.");
 					else
 						LOGGER.info("Das gesuchte Ticket existiert nicht.");
 				}
 			}
-		} catch (SQLException e)
-		{
+		} catch (SQLException e) {
 			LOGGER.error("Couldn't connect to Databse.", e);
 			return CommandResult.Error;
 		}
@@ -82,20 +72,17 @@ public class TicketCommand extends BaseCommand
 	}
 
 	@Override
-	public String getArguments()
-	{
+	public String getArguments() {
 		return "[ID]";
 	}
 
 	@Override
-	public String getDescription()
-	{
+	public String getDescription() {
 		return "Zeigt das Ticket mit der angegebenen ID an.";
 	}
 
 	@Override
-	protected String getDetails()
-	{
+	protected String getDetails() {
 		return "";
 	}
 

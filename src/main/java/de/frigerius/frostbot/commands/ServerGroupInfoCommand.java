@@ -4,42 +4,35 @@ import com.github.theholywaffle.teamspeak3.api.wrapper.Client;
 
 import main.java.de.frigerius.frostbot.ServerInfo;
 
-public class ServerGroupInfoCommand extends BaseCommand
-{
+public class ServerGroupInfoCommand extends BaseCommand {
 
-	public ServerGroupInfoCommand(int cmdPwr)
-	{
+	public ServerGroupInfoCommand(int cmdPwr) {
 		super("getsginfo", cmdPwr);
 	}
 
 	@Override
-	protected CommandResult handleIntern(Client c, String[] args)
-	{
+	protected CommandResult handleIntern(Client c, String[] args) {
 		ServerInfo.getServerGroups();
 		return CommandResult.NoErrors;
 	}
 
 	@Override
-	public boolean hasClientRights(Client c,int cmdPwr)
-	{
+	public boolean hasClientRights(Client c, int cmdPwr) {
 		return true;
 	}
 
 	@Override
-	public String getArguments()
-	{
+	public String getArguments() {
 		return "";
 	}
 
 	@Override
-	public String getDescription()
-	{
+	public String getDescription() {
 		return "";
 	}
 
 	@Override
-	protected String getDetails()
-	{
+	protected String getDetails() {
 		return "";
 	}
 

@@ -19,41 +19,31 @@ import main.java.de.frigerius.frostbot.FrostBot;
 import main.java.de.frigerius.frostbot.MyClient;
 import main.java.de.frigerius.frostbot.UserDatabase;
 
-public class RemoveRecCommand extends BaseCommand
-{
+public class RemoveRecCommand extends BaseCommand {
 	private final Logger LOGGER = LoggerFactory.getLogger(RemoveRecCommand.class);
 
-	public RemoveRecCommand(int cmdPwr)
-	{
+	public RemoveRecCommand(int cmdPwr) {
 		super("remrec", cmdPwr);
 	}
 
 	@Override
-	protected CommandResult handleIntern(Client client, String[] args)
-	{
+	protected CommandResult handleIntern(Client client, String[] args) {
 
 		ChannelInfo channel;
-		try
-		{
+		try {
 			channel = _bot.TS3API.getChannelInfo(client.getChannelId()).get();
-		} catch (InterruptedException e)
-		{
+		} catch (InterruptedException e) {
 			return CommandResult.Error;
 		}
 
-		if (channel != null)
-		{
-			if (channel.getIconId() == (long) (int) BotSettings.recordIconId)
-			{
-				if (MyClient.HasGreaterOrEqualCmdPower(client.getServerGroups(), Commands.Sub1AdminLevel))
-				{
+		if (channel != null) {
+			if (channel.getIconId() == (long) (int) BotSettings.recordIconId) {
+				if (MyClient.HasGreaterOrEqualCmdPower(client.getServerGroups(), Commands.Sub1AdminLevel)) {
 					return handleAdmin(client);
-				} else
-				{
+				} else {
 					return handleUser(client);
 				}
-			} else
-			{
+			} else {
 				_bot.TS3API.sendPrivateMessage(client.getId(), ColoredText.red("Dein aktueller Channel ist kein Aufnahme-Channel."));
 			}
 		} else
@@ -61,56 +51,45 @@ public class RemoveRecCommand extends BaseCommand
 		return CommandResult.NoErrors;
 	}
 
-	private CommandResult handleAdmin(Client client)
-	{
-		try (Connection con = FrostBot.getSQLConnection())
-		{
+	private CommandResult handleAdmin(Client client) {
+		try (Connection con = FrostBot.getSQLConnection()) {
 			String sql = "DELETE FROM RecChannel WHERE ChannelID = ?";
-			try (PreparedStatement stmt = con.prepareStatement(sql))
-			{
+			try (PreparedStatement stmt = con.prepareStatement(sql)) {
 				stmt.setInt(1, client.getChannelId());
 				int result = stmt.executeUpdate();
-				if (result <= 1)
-				{
+				if (result <= 1) {
 					Map<ChannelProperty, String> properties = new HashMap<ChannelProperty, String>();
 					properties.put(ChannelProperty.CHANNEL_ICON_ID, "0");
 					_bot.TS3API.editChannel(client.getChannelId(), properties);
 				}
 			}
 
-		} catch (SQLException e)
-		{
+		} catch (SQLException e) {
 			LOGGER.error("SQL Error", e);
 			return CommandResult.Error;
 		}
 		return CommandResult.NoErrors;
 	}
 
-	private CommandResult handleUser(Client client)
-	{
-		try (Connection con = FrostBot.getSQLConnection())
-		{
+	private CommandResult handleUser(Client client) {
+		try (Connection con = FrostBot.getSQLConnection()) {
 			UserDatabase.AddUser(con, client.getUniqueIdentifier(), client.getNickname());
 			String sql = "DELETE FROM RecChannel WHERE UserUID = ? AND ChannelID = ?";
-			try (PreparedStatement stmt = con.prepareStatement(sql))
-			{
+			try (PreparedStatement stmt = con.prepareStatement(sql)) {
 				stmt.setString(1, client.getUniqueIdentifier());
 				stmt.setInt(2, client.getChannelId());
 				int result = stmt.executeUpdate();
-				if (result <= 1)
-				{
+				if (result <= 1) {
 					Map<ChannelProperty, String> properties = new HashMap<ChannelProperty, String>();
 					properties.put(ChannelProperty.CHANNEL_ICON_ID, "0");
 					_bot.TS3API.editChannel(client.getChannelId(), properties);
-				} else
-				{
+				} else {
 					_bot.TS3API.sendPrivateMessage(client.getId(), "Du hast nicht die Berechtigung das Symbol des Channels zu entfernen");
 				}
 
 			}
 
-		} catch (SQLException e)
-		{
+		} catch (SQLException e) {
 			LOGGER.error("SQL Error", e);
 			return CommandResult.Error;
 		}
@@ -118,20 +97,17 @@ public class RemoveRecCommand extends BaseCommand
 	}
 
 	@Override
-	public String getArguments()
-	{
+	public String getArguments() {
 		return "";
 	}
 
 	@Override
-	public String getDescription()
-	{
+	public String getDescription() {
 		return "Entfernt das Aufnahme Icon vom aktuellen Channel.";
 	}
 
 	@Override
-	protected String getDetails()
-	{
+	protected String getDetails() {
 		return "";
 	}
 

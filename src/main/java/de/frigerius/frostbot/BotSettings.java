@@ -16,8 +16,7 @@ import org.slf4j.LoggerFactory;
 import com.github.theholywaffle.teamspeak3.TS3Query;
 import com.github.theholywaffle.teamspeak3.TS3Query.FloodRate;
 
-public class BotSettings
-{
+public class BotSettings {
 	private static final Logger LOGGER = LoggerFactory.getLogger(BotSettings.class);
 	// Server
 	public static String username = "";
@@ -72,14 +71,11 @@ public class BotSettings
 
 	public static long recordIconId = 2417525910l;
 
-	public static boolean read(File file)
-	{
+	public static boolean read(File file) {
 		Ini ini;
-		try
-		{
+		try {
 			ini = new Ini(file);
-		} catch (Exception e)
-		{
+		} catch (Exception e) {
 			LOGGER.error("File nicht vorhanden oder nicht kompatible.", e);
 			makeDefaultIni();
 			return false;
@@ -97,8 +93,7 @@ public class BotSettings
 		nickName = connection.get("nickname");
 		String[] toNotify = connection.getAll("notify", String[].class);
 		notifyUserIDs.clear();
-		for (String uid : toNotify)
-		{
+		for (String uid : toNotify) {
 			notifyUserIDs.add(uid);
 		}
 		serverName = connection.get("servername");
@@ -111,18 +106,15 @@ public class BotSettings
 		afkChannelID = afkMover.get("channelID", int.class, -1);
 		afkChannelIDLong = afkMover.get("longChannelID", int.class, -1);
 		isAFKMoverEnabled = afkMover.get("enabled", boolean.class, false) && afkChannelID != -1;
-		if (isAFKMoverEnabled)
-		{
+		if (isAFKMoverEnabled) {
 			afkRule = afkMover.get("afkRule", int.class, -1);
 			afkTime = afkMover.get("maxAfkTime", int.class, 900000);
 			int[] spectateChannels = afkMover.getAll("spectateChannelId", int[].class);
-			for (int i : spectateChannels)
-			{
+			for (int i : spectateChannels) {
 				afkSpectateChannelIDs.add(i);
 			}
 			int[] ignoreServerGroup = afkMover.getAll("ignoreGroups", int[].class);
-			for (int i : ignoreServerGroup)
-			{
+			for (int i : ignoreServerGroup) {
 				afkIgnoreServerGroups.add(i);
 			}
 		}
@@ -138,17 +130,14 @@ public class BotSettings
 		supporterChannelID = support.get("channelId", int.class, -1);
 		int[] supIds = support.getAll("group", int[].class);
 		supporterGroups.clear();
-		for (int id : supIds)
-		{
+		for (int id : supIds) {
 			supporterGroups.add(id);
 		}
 		String[] ids = support.getAll("verifiedId", String[].class);
 		server_groupMap.clear();
-		for (String idPair : ids)
-		{
+		for (String idPair : ids) {
 			String[] split = idPair.split(":");
-			if (split.length == 2)
-			{
+			if (split.length == 2) {
 				server_groupMap.put(split[1], Integer.parseInt(split[0]));
 			}
 		}
@@ -157,8 +146,7 @@ public class BotSettings
 		eventParentChannelId = support.get("eventParentChannelId", int.class, -1);
 		String[] creatorIds = support.getAll("channelCreateAllowedIds", String[].class);
 		channelCreateAllowedIds.clear();
-		for (String s : creatorIds)
-		{
+		for (String s : creatorIds) {
 			channelCreateAllowedIds.add(Integer.parseInt(s));
 		}
 		ignoreMeGroup = support.get("ignoreMeGroup", int.class, -1);
@@ -174,8 +162,7 @@ public class BotSettings
 		return true;
 	}
 
-	public static void saveToFile()
-	{
+	public static void saveToFile() {
 		Ini ini = makeIni();
 
 		Section connection = ini.get("Connection");
@@ -211,8 +198,7 @@ public class BotSettings
 		support.put("channelId", supporterChannelID);
 		support.putAll("group", supporterGroups);
 		support.put("verifiedId", "id:servername");
-		for (Entry<String, Integer> entry : server_groupMap.entrySet())
-		{
+		for (Entry<String, Integer> entry : server_groupMap.entrySet()) {
 			support.put("verifiedId", entry.getValue() + ":" + entry.getKey());
 		}
 		support.put("removeGroupIdOnVerify", removeGroupIdOnVerify);
@@ -228,18 +214,15 @@ public class BotSettings
 		Section misc = ini.get("Misc");
 		misc.put("recordChannelIconId", recordIconId);
 
-		try
-		{
+		try {
 			ini.store(new FileOutputStream("config.ini"));
 
-		} catch (IOException e)
-		{
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
-	public static void makeDefaultIni()
-	{
+	public static void makeDefaultIni() {
 		Ini defaultIni = makeIni();
 
 		Section connection = defaultIni.get("Connection");
@@ -286,18 +269,15 @@ public class BotSettings
 		Section misc = defaultIni.get("Misc");
 		misc.put("recordChannelIconId", "0");
 
-		try
-		{
+		try {
 			defaultIni.store(new FileOutputStream("config.ini"));
 
-		} catch (IOException e)
-		{
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
-	private static Ini makeIni()
-	{
+	private static Ini makeIni() {
 		Ini defaultIni = new Ini();
 		defaultIni.add("Connection");
 		defaultIni.putComment("Connection", "Hier wird die Verbindung zum Server eingerichtet.");

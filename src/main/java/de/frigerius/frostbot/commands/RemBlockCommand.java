@@ -13,37 +13,29 @@ import main.java.de.frigerius.frostbot.ColoredText;
 import main.java.de.frigerius.frostbot.FrostBot;
 import main.java.de.frigerius.frostbot.UserDatabase;
 
-public class RemBlockCommand extends BaseCommand
-{
+public class RemBlockCommand extends BaseCommand {
 	private final Logger LOGGER = LoggerFactory.getLogger(RemBlockCommand.class);
 
-	public RemBlockCommand(int cmdPwr)
-	{
+	public RemBlockCommand(int cmdPwr) {
 		super("remblock", cmdPwr);
 	}
 
 	@Override
-	protected CommandResult handleIntern(Client client, String[] args)
-	{
-		try (Connection con = FrostBot.getSQLConnection())
-		{
+	protected CommandResult handleIntern(Client client, String[] args) {
+		try (Connection con = FrostBot.getSQLConnection()) {
 			UserDatabase.AddUser(con, client.getUniqueIdentifier(), client.getNickname());
 			String sql = "DELETE FROM RecChannel WHERE ChannelID = ? AND ChannelState = 'BlockRec'";
-			try (PreparedStatement stmt = con.prepareStatement(sql))
-			{
+			try (PreparedStatement stmt = con.prepareStatement(sql)) {
 				stmt.setInt(1, client.getChannelId());
 				int result = stmt.executeUpdate();
-				if (result == 1)
-				{
+				if (result == 1) {
 					_bot.TS3API.sendPrivateMessage(client.getId(), ColoredText.green("Die Sperre wurde aufgehoben."));
-				} else
-				{
+				} else {
 					_bot.TS3API.sendPrivateMessage(client.getId(), "Für deinen Channel ist keine Sperre vorhanden.");
 				}
 			}
 
-		} catch (SQLException e)
-		{
+		} catch (SQLException e) {
 			LOGGER.error("SQL Error", e);
 			return CommandResult.Error;
 		}
@@ -51,20 +43,17 @@ public class RemBlockCommand extends BaseCommand
 	}
 
 	@Override
-	public String getArguments()
-	{
+	public String getArguments() {
 		return "";
 	}
 
 	@Override
-	public String getDescription()
-	{
+	public String getDescription() {
 		return "Entfernt den Record-Block vom aktuellen channel.";
 	}
 
 	@Override
-	protected String getDetails()
-	{
+	protected String getDetails() {
 		return "";
 	}
 

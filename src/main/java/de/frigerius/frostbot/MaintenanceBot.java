@@ -2,63 +2,55 @@ package main.java.de.frigerius.frostbot;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.LinkedList;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.theholywaffle.teamspeak3.api.wrapper.ServerGroup;
+import com.github.theholywaffle.teamspeak3.api.wrapper.ServerGroupClient;
 
-public class MaintenanceBot
-{
+public class MaintenanceBot {
 	private final Logger LOGGER = LoggerFactory.getLogger(MaintenanceBot.class);
 	private MyConnection _connection;
 	private FrostBot _bot;
 
-	public MaintenanceBot(String[] args)
-	{
+	public MaintenanceBot(String[] args) {
 		LOGGER.info("Starte Wartung...");
 		BotSettings.nickName = "MaintenanceBot";
 		_connection = new MyConnection(() -> {
 		});
-		try (Connection con = FrostBot.getSQLConnection())
-		{
-			con.setAutoCommit(false);
-			for (String s : args)
-			{
 
-				if (s.equals("fillSg"))
-				{
+		try (Connection con = FrostBot.getSQLConnection()) {
+			con.setAutoCommit(false);
+			for (String s : args) {
+
+				if (s.equals("fillSg")) {
 					FillServerGroupTable();
 				}
-				if (s.equalsIgnoreCase("setupdb"))
-				{
+				if (s.equalsIgnoreCase("setupdb")) {
 					SetupDBS(con);
 				}
-				if (s.equals("transfer"))
-				{
-					CopyVerifications(con);
+				if (s.equals("resetverifications")) {
+					RemoveVerifications(con);
 				}
 			}
-		} catch (SQLException e)
-		{
+		} catch (SQLException e) {
 			LOGGER.error("Couldn't connect to Databse.", e);
 		}
 	}
 
-	private void FillServerGroupTable()
-	{
+	private void FillServerGroupTable() {
 		_connection.init();
 		_bot.TS3API.getServerGroups().onSuccess(result -> {
 			PreparedStatement insrt = null;
-			try (Connection con = FrostBot.getSQLConnection())
-			{
+			try (Connection con = FrostBot.getSQLConnection()) {
 				con.setAutoCommit(false);
 				insrt = con.prepareStatement("insert into ServerGroups (ID, Name, IsUserRank, CmdPower) values (?, ?, ?, ?)");
-				for (ServerGroup sg : result)
-				{
+				for (ServerGroup sg : result) {
 					insrt.setInt(1, sg.getId());
 					insrt.setString(2, sg.getName());
 					insrt.setBoolean(3, false);
@@ -68,17 +60,13 @@ public class MaintenanceBot
 				insrt.executeBatch();
 				con.commit();
 
-			} catch (SQLException e)
-			{
+			} catch (SQLException e) {
 				LOGGER.error("Couldn't connect to Databse.", e);
-			} finally
-			{
+			} finally {
 				if (insrt != null)
-					try
-					{
+					try {
 						insrt.close();
-					} catch (SQLException e)
-					{
+					} catch (SQLException e) {
 						e.printStackTrace();
 					}
 				_bot.QUERY.exit();
@@ -86,10 +74,8 @@ public class MaintenanceBot
 		});
 	}
 
-	private void SetupDBS(Connection con)
-	{
-		try (Statement stmt = con.createStatement())
-		{
+	private void SetupDBS(Connection con) {
+		try (Statement stmt = con.createStatement()) {
 			String createUsers = "CREATE TABLE Users(UserUID VARCHAR(40) NOT NULL PRIMARY KEY, UserName VARCHAR(255) NOT NULL)";
 			String createServerGroups = "CREATE TABLE ServerGroups(ID INT(11) NOT NULL PRIMARY KEY, Name VARCHAR(255), IsUserRank BOOLEAN, CmdPower INT(11))";
 			String createGuilds = "CREATE TABLE Guilds(GuildID VARCHAR(40) NOT NULL PRIMARY KEY, SGID INT(11), GuildName VARCHAR(40), FOREIGN KEY (SGID) REFERENCES ServerGroups(ID))";
@@ -108,44 +94,52 @@ public class MaintenanceBot
 			stmt.addBatch(recChannel);
 			stmt.executeBatch();
 			con.commit();
-		} catch (SQLException e)
-		{
+		} catch (SQLException e) {
 			LOGGER.error("Couldn't connect to Databse.", e);
 		}
 	}
 
-	private void CopyVerifications(Connection con)
-	{
-		try (Statement stmt = con.createStatement())
-		{
-			ResultSet result = stmt.executeQuery("SELECT * FROM old_Verifications");
-			try (PreparedStatement insrt = con.prepareStatement("INSERT INTO Verifications (AccountID, NumOfRegs, FirstUserUID, Server, LastEdit) Values (?,?,?,?,?)"))
-			{
-				try (PreparedStatement insrtUser = con.prepareStatement("INSERT INTO Users(UserUID, UserName) VALUES (?,?) ON DUPLICATE KEY UPDATE UserName = ?"))
-				{
-					while (result.next())
-					{
-						insrtUser.setString(1, result.getString("uid"));
-						insrtUser.setString(2, result.getString("nickname"));
-						insrtUser.setString(3, result.getString("nickname"));
-						insrt.setString(1, result.getString("accountid"));
-						insrt.setInt(2, result.getInt("numoregs"));
-						insrt.setString(3, result.getString("uid"));
-						insrt.setString(4, result.getString("server"));
-						insrt.setTimestamp(5, result.getTimestamp("lastedit"));
-						insrtUser.addBatch();
-						insrt.addBatch();
-					}
-					insrtUser.executeBatch();
-					insrt.executeBatch();
-					con.commit();
-				}
-			}
-
-		} catch (SQLException e)
-		{
-			LOGGER.error("Database error", e);
+	public void RemoveVerifications(Connection con) {
+		_connection.init();
+		_bot.refreshRankPermissionMaps();
+		_bot.TS3API.sendServerMessage("[INFO] Es werden nun die verifizierten Benutzer zurückgesetzt. Während dessen steht euch der Bot nicht zur Verfügung.");
+		LOGGER.info("Removing Verifications from Database...");
+		String sqlDel = "DELETE FROM Verifications WHERE ForumUserName Is NULL";
+		String sqlClear = "UPDATE Verifications SET NumOfRegs = NULL, FirstUserUID = NULL, SecondUserUID = NULL";
+		try (Statement stmt = con.createStatement()) {
+			int removed = stmt.executeUpdate(sqlDel);
+			int updated = stmt.executeUpdate(sqlClear);
+			con.commit();
+			LOGGER.info(String.format("Removed %d Updated %d", removed, updated));
+		} catch (SQLException e) {
+			LOGGER.error("Wasn't able to reset Verifications.", e);
 		}
+		List<Integer> ids = new LinkedList<Integer>(BotSettings.server_groupMap.values());
+		ids.add(BotSettings.removeGroupIdOnVerify);
+		LOGGER.info("Removing clients from ServerGroups...");
+		for (int id : ids) {
+			if (_bot.isUserRank(id)) {
+				int sgId = id;
+				_bot.TS3API.getServerGroupClients(sgId).onSuccess(clients -> {
+					LOGGER.info(String.format("Removing clients from ServerGroup %d StartCount %d", sgId, clients.size()));
+					for (ServerGroupClient client : clients) {
+						_bot.TS3API.removeClientFromServerGroup(sgId, client.getClientDatabaseId()).onFailure(b -> {
+							LOGGER.info(String.format("Failed removing Client %s from ServerGroup %d", client.getNickname(), sgId));
+						});
+					}
+				}).onFailure(b -> {
+					LOGGER.error(String.format("Failed getting clients from ServerGroup %d", sgId));
+				});
+			}
+		}
+		try {
+			_bot.TS3API.sendServerMessage(
+					"[INFO] Die verifizierten Benutzer wurden erfolgreich zurückgesetzt.\nBitte wende dich mit \"!help verify\" an den FrostBot, um zu erfahren, wie du dich wieder verifizieren kannst.\n").await();
+			_bot.QUERY.exit();
+		} catch (InterruptedException e) {
+			LOGGER.error("WhoAmI Filed", e);
+		}
+
 	}
 
 }

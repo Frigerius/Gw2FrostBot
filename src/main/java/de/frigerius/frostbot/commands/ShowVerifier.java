@@ -8,22 +8,18 @@ import com.github.theholywaffle.teamspeak3.api.wrapper.Client;
 import main.java.de.frigerius.frostbot.ClientController;
 import main.java.de.frigerius.frostbot.MyClient;
 
-public class ShowVerifier extends BaseCommand
-{
+public class ShowVerifier extends BaseCommand {
 	ClientController _clientController;
 
-	public ShowVerifier(int cmdPwr)
-	{
+	public ShowVerifier(int cmdPwr) {
 		super("listverifier", cmdPwr);
 		_clientController = _bot.getClientController();
 	}
 
 	@Override
-	protected CommandResult handleIntern(Client c, String[] args)
-	{
+	protected CommandResult handleIntern(Client c, String[] args) {
 		List<String> sups = new ArrayList<>();
-		for (MyClient client : _clientController.getSupporter())
-		{
+		for (MyClient client : _clientController.getSupporter()) {
 			sups.add(client.getName());
 		}
 		_bot.TS3API.sendPrivateMessage(c.getId(), "Momentan befinden sich folgende Verifizierer auf dem Server:\n" + String.join(", ", sups));
@@ -31,20 +27,17 @@ public class ShowVerifier extends BaseCommand
 	}
 
 	@Override
-	public String getArguments()
-	{
+	public String getArguments() {
 		return "";
 	}
 
 	@Override
-	public String getDescription()
-	{
+	public String getDescription() {
 		return "Listet alle aktuell verfügbaren Verifizierer auf.";
 	}
 
 	@Override
-	protected String getDetails()
-	{
+	protected String getDetails() {
 		return "";
 	}
 
